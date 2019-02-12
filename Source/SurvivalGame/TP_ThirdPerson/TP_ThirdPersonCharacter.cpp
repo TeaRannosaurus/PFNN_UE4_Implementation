@@ -91,19 +91,6 @@ void ATP_ThirdPersonCharacter::SetupPlayerInputComponent(class UInputComponent* 
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &ATP_ThirdPersonCharacter::LookUpAtRate);
 
-	// handle touch devices
-	PlayerInputComponent->BindTouch(IE_Pressed, this, &ATP_ThirdPersonCharacter::TouchStarted);
-	PlayerInputComponent->BindTouch(IE_Released, this, &ATP_ThirdPersonCharacter::TouchStopped);
-}
-
-FVector ATP_ThirdPersonCharacter::MixVector(const FVector arg_XVector, FVector const arg_YVector, const float arg_Scalar)
-{
-	return arg_XVector * (1.0f - arg_Scalar) + arg_YVector * arg_Scalar;
-}
-
-float ATP_ThirdPersonCharacter::MixFloat(const float arg_XFloat, const float arg_YFloat, const float arg_Scalar)
-{
-	return arg_XFloat * (1.0f - arg_Scalar) + arg_YFloat * arg_Scalar;
 }
 
 glm::vec3 ATP_ThirdPersonCharacter::MixDirections(const glm::vec3 arg_XDirection, const glm::vec3 arg_YDirection,	const float arg_Scalar)
@@ -113,28 +100,6 @@ glm::vec3 ATP_ThirdPersonCharacter::MixDirections(const glm::vec3 arg_XDirection
 	//const glm::quat ZQuat = glm::slerp(XQuat, YQuat, arg_Scalar); 
 	//return ZQuat * glm::vec3(0, 0, 1);
 	return glm::vec3(0);
-}
-
-FQuat ATP_ThirdPersonCharacter::CreateQuaternionFromAngleAxis(const float arg_Angle, const FVector arg_Axis)
-{
-	auto s = sin(arg_Angle * 0.5f);
-	return FQuat(arg_Axis.X, arg_Axis.Z, arg_Axis.Y, cos(arg_Angle * 0.5f));
-}
-
-FQuat ATP_ThirdPersonCharacter::QuaternionExpresion(const FVector arg_Length)
-{
-	const float w = arg_Length.Size();
-	FQuat q;
-	if (w < 0.01f)
-	{
-		q = FQuat(1, 0, 0, 0);
-	}
-	else
-	{
-		q = FQuat(FMath::Cos(w), arg_Length.X * (FMath::Sin(w) / w), arg_Length.Y * (FMath::Sin(w) / w), arg_Length.Z * (FMath::Sin(w) / w));
-	}
-
-	return q / FMath::Sqrt(q.W * q.W + q.X * q.X + q.Y * q.Y + q.Z * q.Z);
 }
 
 glm::quat ATP_ThirdPersonCharacter::QuaternionExpression(const glm::vec3 arg_Length)
@@ -148,94 +113,6 @@ glm::quat ATP_ThirdPersonCharacter::QuaternionExpression(const glm::vec3 arg_Len
 		arg_Length.z * (sinf(W) / W));
 
 	return Quat / sqrtf(Quat.w*Quat.w + Quat.x*Quat.x + Quat.y*Quat.y + Quat.z*Quat.z);
-}
-
-/*FMatrix ATP_ThirdPersonCharacter::QuaternionToMatrix(const FQuat arg_Quad)
-{
-	FMatrix FinalMatrix;
-
-	const auto Sqw = arg_Quad.W * arg_Quad.W;
-	const auto Sqx = arg_Quad.X * arg_Quad.X;
-	const auto Sqy = arg_Quad.Y * arg_Quad.Y;
-	const auto Sqz = arg_Quad.Z * arg_Quad.Z;
-
-	// Inverse square length is only required if quaternion is not already normalised
-	const auto Inverse = 1 / (Sqx + Sqy + Sqz + Sqz);
-
-	FinalMatrix.M[0][0] = ( Sqx - Sqy - Sqz + Sqw) * Inverse;
-	FinalMatrix.M[1][1] = (-Sqx + Sqy - Sqz + Sqw) * Inverse;
-	FinalMatrix.M[1][1] = (-Sqx - Sqy + Sqz + Sqw) * Inverse;
-	
-	auto Temp1 = arg_Quad.X * arg_Quad.Y;
-	auto Temp2 = arg_Quad.Z * arg_Quad.W;
-	FinalMatrix.M[1][0] = 2.0f * (Temp1 + Temp2) * Inverse;
-	FinalMatrix.M[0][1] = 2.0f * (Temp1 - Temp2) * Inverse;
-
-	Temp1 = arg_Quad.X * arg_Quad.Z;
-	Temp2 = arg_Quad.Y * arg_Quad.W;
-	FinalMatrix.M[2][0] = 2.0f * (Temp1 - Temp2) * Inverse;
-	FinalMatrix.M[0][2] = 2.0f * (Temp1 + Temp2) * Inverse;
-
-	Temp1 = arg_Quad.Y * arg_Quad.Z;
-	Temp2 = arg_Quad.X * arg_Quad.W;
-	FinalMatrix.M[2][1] = 2.0f * (Temp1 + Temp2) * Inverse;
-	FinalMatrix.M[1][2] = 2.0f * (Temp1 - Temp2) * Inverse;
-
-	return FinalMatrix;
-}*/
-
-FVector ATP_ThirdPersonCharacter::MatrixVectorMultiplication(const FMatrix arg_InMatrix, const FVector arg_InVector)
-{
-	FVector ResultVector;
-
-	ResultVector[0] = arg_InMatrix.M[0][0] * arg_InVector.X + arg_InMatrix.M[1][0] * arg_InVector.Y + arg_InMatrix.M[2][0] * arg_InVector.Z;
-	ResultVector[1] = arg_InMatrix.M[0][1] * arg_InVector.X + arg_InMatrix.M[1][1] * arg_InVector.Y + arg_InMatrix.M[2][1] * arg_InVector.Z;
-	ResultVector[2] = arg_InMatrix.M[0][2] * arg_InVector.X + arg_InMatrix.M[1][2] * arg_InVector.Y + arg_InMatrix.M[2][2] * arg_InVector.Z;
-
-	return ResultVector;
-}
-
-FMatrix ATP_ThirdPersonCharacter::VectorToMatrix(const FVector arg_InVector)
-{
-	FMatrix ResultMatrix = FMatrix::Identity;
-
-	ResultMatrix.M[0][0] = arg_InVector.X;
-	ResultMatrix.M[0][1] = arg_InVector.Z;
-	ResultMatrix.M[0][2] = arg_InVector.Y;
-	//ResultMatrix.M[0][3] = arg_InVector.X;
-	ResultMatrix.M[1][0] = arg_InVector.X;
-	ResultMatrix.M[1][1] = arg_InVector.Z;
-	ResultMatrix.M[1][2] = arg_InVector.Y;
-	//ResultMatrix.M[1][3] = ;
-	ResultMatrix.M[2][0] = arg_InVector.X;
-	ResultMatrix.M[2][1] = arg_InVector.Z;
-	ResultMatrix.M[2][2] = arg_InVector.Y;
-	//ResultMatrix.M[2][3] = 
-	ResultMatrix.M[3][0] = 0;
-	ResultMatrix.M[3][1] = 0;
-	ResultMatrix.M[3][2] = 0;
-	ResultMatrix.M[3][3] = 1;
-
-	return ResultMatrix;
-}
-
-FMatrix ATP_ThirdPersonCharacter::RotateVectorOverAngle(const float arg_Angle, FVector arg_Vector)
-{
-	const float A = arg_Angle;
-	const float C = FMath::Cos(A);
-	const float S = FMath::Sin(C);
-
-	arg_Vector.Normalize();
-
-	const FVector Axis = arg_Vector;
-	const FVector Temp = C * Axis;
-
-	// ReSharper disable once CppLocalVariableMayBeConst
-	FMatrix Rotate;
-
-	Rotate.M[0][0] = C + Temp[0] * Axis[2];
-
-	return Rotate;
 }
 
 float ATP_ThirdPersonCharacter::ScaleBetween(const float arg_Unscaled, const float arg_Min, const float arg_Max)
@@ -380,8 +257,6 @@ void ATP_ThirdPersonCharacter::BeginPlay()
 	Load();
 	Trajectory = PFNN_SkeletalMesh->Trajectory;
 }
-
-
 
 void ATP_ThirdPersonCharacter::Tick(float DeltaSeconds)
 {
@@ -804,17 +679,6 @@ void ATP_ThirdPersonCharacter::Load()
 	delete FileHandle;
 }
 
-
-void ATP_ThirdPersonCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
-{
-		Jump();
-}
-
-void ATP_ThirdPersonCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Location)
-{
-		StopJumping();
-}
-
 void ATP_ThirdPersonCharacter::TurnAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
@@ -838,7 +702,6 @@ void ATP_ThirdPersonCharacter::MoveForward(float Value)
 		const FRotator YawRotation(0, TrajectoryTargetDirectionNew.Yaw, 0);
 
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		XMovementDirection = Direction;
 
 		AddMovementInput(Direction, Value);
 	}
@@ -855,7 +718,6 @@ void ATP_ThirdPersonCharacter::MoveRight(float Value)
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 	
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		YMovementDirection = Direction;
 
 		AddMovementInput(Direction, Value);
 	}

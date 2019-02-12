@@ -133,37 +133,12 @@ protected:
 	 */
 	void LookUpAtRate(float Rate);
 
-	/** Handler for when a touch input begins. */
-	void TouchStarted(ETouchIndex::Type FingerIndex, FVector Location);
-
-	/** Handler for when a touch input stops. */
-	void TouchStopped(ETouchIndex::Type FingerIndex, FVector Location);
-
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	// End of APawn interface
 
 private:
 
-	FVector XMovementDirection; 
-	FVector YMovementDirection;
-
-	/*
-	 * @Description Returnes a liniar bled between the X and Y vector by using the floating point scalar
-	 * @Param[in] X vector
-	 * @Param[in] Y vector
-	 * @Param[in] Scalar
-	 * @Return The result of liniar blending X, Y and the scalar
-	 */
-	FVector MixVector(const FVector arg_XVector, const FVector arg_YVector, const float arg_Scalar);
-	/*
-	* @Description Returnes a liniar bled between the X and Y float by using the floating point scalar
-	* @Param[in] X float
-	* @Param[in] Y float
-	* @Param[in] Scalar
-	* @Return The result of liniar blending X, Y and the scalar
-	*/
-	float MixFloat(const float arg_XFloat, const float arg_YFloat, const float arg_Scalar);
 	/*
 	* @Description Returnes a liniar bled between the X and Y vector direction by using the floating point scalar
 	* @Param[in] X vector
@@ -178,13 +153,7 @@ private:
 	* @Param[in] Axis
 	* @Return Resulting calculation
 	*/
-	FQuat CreateQuaternionFromAngleAxis(const float arg_Angle, const FVector arg_Axis);
-	FQuat QuaternionExpresion(const FVector arg_Length);
-	FMatrix QuaternionToMatrix(const FQuat arg_Quat);
 	glm::quat QuaternionExpression(const glm::vec3 arg_Length);
-	FVector MatrixVectorMultiplication(const FMatrix arg_InMatrix, const FVector arg_InVector);
-	FMatrix VectorToMatrix(const FVector arg_InVector);
-	FMatrix RotateVectorOverAngle(const float arg_Angle, FVector arg_Vector);
 	float ScaleBetween(const float arg_Unscaled, const float arg_Min, const float arg_Max);
 
 	void DrawDebugPoints();
@@ -197,4 +166,3 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 };
-
