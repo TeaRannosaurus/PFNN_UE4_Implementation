@@ -13,6 +13,7 @@
 #include "Gameplay/Movement/AnimationController/PhaseFunctionNeuralNetwork.h"
 #include "Gameplay/Movement/PFNNTrajectory.h"
 #include "Engine/Engine.h"
+#include "Components/PoseableMeshComponent.h"
 #include "DrawDebugHelpers.h"
 #include "ThirdParty/glm/glm.hpp"
 #include "ThirdParty/glm/gtx/transform.hpp"
@@ -57,6 +58,7 @@ ATP_ThirdPersonCharacter::ATP_ThirdPersonCharacter() : Phase(0.0f), ExtraDirecti
 	CameraBoom->TargetArmLength = 300.0f; // The camera follows at this distance behind the character	
 	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
 
+
 	// Create a follow camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
@@ -64,6 +66,9 @@ ATP_ThirdPersonCharacter::ATP_ThirdPersonCharacter() : Phase(0.0f), ExtraDirecti
 
 
 	PFNN_SkeletalMesh = CreateDefaultSubobject<UPFNN_SkeletalMeshComponent>(TEXT("PFNN controller"));
+	PosableMesh = CreateDefaultSubobject<UPoseableMeshComponent>(TEXT("PosableMesh comp"));
+	PosableMesh->SetSkeletalMesh(FindComponentByClass<USkeletalMeshComponent>()->SkeletalMesh);
+	PosableMesh->AllocateTransformData();
 	//skeletalmesh
 	//PFNN_SkeletalMesh->MeshObject ;
 
@@ -95,6 +100,7 @@ void ATP_ThirdPersonCharacter::SetupPlayerInputComponent(class UInputComponent* 
 
 glm::vec3 ATP_ThirdPersonCharacter::MixDirections(const glm::vec3 arg_XDirection, const glm::vec3 arg_YDirection,	const float arg_Scalar)
 {
+	//TODO: Re enable this function
 	//const glm::quat XQuat = glm::angleAxis(atan2f(arg_XDirection.y, arg_XDirection.x), glm::vec3(1, 0, 0));
 	//const glm::quat YQuat = glm::angleAxis(atan2f(arg_YDirection.y, arg_YDirection.x), glm::vec3(1, 0, 0));
 	//const glm::quat ZQuat = glm::slerp(XQuat, YQuat, arg_Scalar); 
@@ -630,7 +636,21 @@ void ATP_ThirdPersonCharacter::Tick(float DeltaSeconds)
 		FinalBoneRotations[i] = FQuat(1, 0, 0, 0);
 	}
 
-	PFNN_SkeletalMesh->PosableMesh->SetSkeletonData(FinalBoneLocations, FinalBoneRotations, FinalScale);
+	FSkeletonData SkeletonData;
+	SkeletonData.BonePositions	= FinalBoneLocations;
+	SkeletonData.BoneRotations	= FinalBoneRotations;
+	SkeletonData.Scale = FinalScale;
+
+
+	for (int32 i = 0; i < JOINT_NUM; i++)
+	{
+		const FName BoneName = PosableMesh->GetBoneName(i);
+
+		const FTransform BoneTransform(SkeletonData.BoneRotations[i], SkeletonData.BonePositions[i]);
+		PosableMesh->SetBoneTransformByName(BoneName, BoneTransform, EBoneSpaces::WorldSpace);
+	}
+	PosableMesh->SetWorldScale3D(FVector(SkeletonData.Scale));
+
 
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow, FString::Printf(TEXT("Trajectory->GaitStand half = %f"), Trajectory->GaitStand[UPFNNTrajectory::LENGTH / Half]));
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow, FString::Printf(TEXT("Trajectory->GaitWalk half = %f"), Trajectory->GaitWalk[UPFNNTrajectory::LENGTH / Half]));

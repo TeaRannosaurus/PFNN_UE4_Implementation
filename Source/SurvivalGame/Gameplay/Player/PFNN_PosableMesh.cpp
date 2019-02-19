@@ -37,20 +37,21 @@ void UPFNN_PosableMesh::SetSkeletalMeshObject(USkeletalMeshComponent* NewMesh)
 {
 	//SkeletonData.BonePositions = TArray<FVector>();
 	//SkeletonData.BoneRotations = TArray<FQuat>();
-	SkeletonData.Scale = 1;
-	SkeletalMesh = NewMesh->SkeletalMesh;
+	//SkeletonData.Scale = 1;
+	//SkeletalMesh = NewMesh->SkeletalMesh;
+	//AllocateTransformData();
 }
 
 void UPFNN_PosableMesh::SetSkeletonData(TArray<FVector> arg_Location, TArray<FQuat> arg_Rotation, float arg_Scale)
 {
 	SkeletonData.BonePositions = arg_Location;
 	SkeletonData.BoneRotations = arg_Rotation;
-	SkeletonData.Scale			= arg_Scale;
+	SkeletonData.Scale		   = arg_Scale;
 }
 
 
 void UPFNN_PosableMesh::TickPose(float DeltaTime, bool bNeedsValidRootMotion)
-{
+{	
 	Super::TickPose(DeltaTime, bNeedsValidRootMotion);
 
 	if (SkeletonData.HasEmptyValues())

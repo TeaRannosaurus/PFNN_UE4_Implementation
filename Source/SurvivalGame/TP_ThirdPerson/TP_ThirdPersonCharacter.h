@@ -24,6 +24,10 @@ class ATP_ThirdPersonCharacter : public ACharacter
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
+
+	UPROPERTY(VisibleAnywhere, Category = PFNN)
+	class UPoseableMeshComponent* PosableMesh;
+
 public:
 	ATP_ThirdPersonCharacter();
 

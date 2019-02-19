@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/PoseableMeshComponent.h"
 #include "PFNN_SkeletalMeshComponent.generated.h"
 
 class PhaseFunctionNeuralNetwork;
@@ -29,7 +30,10 @@ public:
 	UPFNNTrajectory* Trajectory;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = PFNN)
-	UPFNN_PosableMesh* PosableMesh;
+	UPFNN_PosableMesh* PFNNPosableMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = PFNN)
+	UPoseableMeshComponent* PosableMesh; 
 
 	PhaseFunctionNeuralNetwork* PFNN;
 };

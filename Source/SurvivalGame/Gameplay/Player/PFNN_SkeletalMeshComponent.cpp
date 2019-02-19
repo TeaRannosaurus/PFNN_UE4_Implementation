@@ -13,12 +13,13 @@ UPFNN_SkeletalMeshComponent::UPFNN_SkeletalMeshComponent(): Trajectory(nullptr),
 	//PFNN = new PhaseFunctionNeuralNetwork(PhaseFunctionNeuralNetwork::MODE_LINEAR);
 
 	Trajectory = CreateDefaultSubobject<UPFNNTrajectory>(TEXT("Trajectory"));
-	PosableMesh = CreateDefaultSubobject<UPFNN_PosableMesh>(TEXT("PosableMesh"));
+	//PosableMesh = CreateDefaultSubobject<UPoseableMeshComponent>(TEXT("PosableMeshComponent"));
+	//PFNNPosableMesh = CreateDefaultSubobject<UPFNN_PosableMesh>(TEXT("PFNNPosableMesh"));
 }
 
 UPFNN_SkeletalMeshComponent::~UPFNN_SkeletalMeshComponent()
 {
-	//PosableMesh->BeginDestroy();
+	//PFNNPosableMesh->BeginDestroy();
 	//Trajectory->BeginDestroy();
 	//delete PFNN;
 }
@@ -29,7 +30,8 @@ void UPFNN_SkeletalMeshComponent::BeginPlay()
 
 	USkeletalMeshComponent* SkeletalMesh = GetOwner()->FindComponentByClass<USkeletalMeshComponent>();
 
-	PosableMesh->SetSkeletalMeshObject(SkeletalMesh);
+	PFNNPosableMesh->SetSkeletalMeshObject(SkeletalMesh);
+	//PosableMesh->AllocateTransformData();
 	PFNN->load();
 
 
