@@ -1,14 +1,13 @@
 // Copyright 2018 Sticks & Stones. All Rights Reserved.
 
 #include "PFNN_SkeletalMeshComponent.h"
-#include "Gameplay/Movement/AnimationController/PhaseFunctionNeuralNetwork.h"
 #include "Gameplay/Movement/PFNNTrajectory.h"
 #include "Gameplay/Player/PFNN_PosableMesh.h"
 
 UPFNN_SkeletalMeshComponent::UPFNN_SkeletalMeshComponent(): Trajectory(nullptr), PFNN(nullptr)
 {
-	PFNN = new PhaseFunctionNeuralNetwork(PhaseFunctionNeuralNetwork::MODE_CONSTANT);
 	///Other load modes for the PFNN
+	//PFNN = new PhaseFunctionNeuralNetwork(PhaseFunctionNeuralNetwork::MODE_CONSTANT);
 	//PFNN = new PhaseFunctionNeuralNetwork(PhaseFunctionNeuralNetwork::MODE_CUBIC);
 	//PFNN = new PhaseFunctionNeuralNetwork(PhaseFunctionNeuralNetwork::MODE_LINEAR);
 
@@ -32,7 +31,7 @@ void UPFNN_SkeletalMeshComponent::BeginPlay()
 
 	PFNNPosableMesh->SetSkeletalMeshObject(SkeletalMesh);
 	//PosableMesh->AllocateTransformData();
-	PFNN->load();
+	//PFNN->LoadNetworkData();
 
 
 	//UE_LOG(NeuralNetworkLoading, Fatal, TEXT("Fatal error, Failed to load Phase Function Neural Network weights. File name "));

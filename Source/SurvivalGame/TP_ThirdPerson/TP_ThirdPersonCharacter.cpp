@@ -10,7 +10,7 @@
 #include "Gameplay/Player/PFNN_SkeletalMeshComponent.h"
 #include "Gameplay/Player/PFNN_PosableMesh.h"
 #include "PlatformFilemanager.h"
-#include "Gameplay/Movement/AnimationController/PhaseFunctionNeuralNetwork.h"
+//#include "Gameplay/Movement/AnimationController/PhaseFunctionNeuralNetwork.h"
 #include "Gameplay/Movement/PFNNTrajectory.h"
 #include "Engine/Engine.h"
 #include "Components/PoseableMeshComponent.h"
@@ -19,15 +19,11 @@
 #include "ThirdParty/glm/gtx/transform.hpp"
 #include "ThirdParty/glm/gtx/quaternion.hpp"
 #include "ThirdParty/glm/gtc/quaternion.hpp"
-#include "ThirdParty/glm/gtx/rotate_vector.hpp"
 
-
-//////////////////////////////////////////////////////////////////////////
-// ATP_ThirdPersonCharacter
 
 #define GLM_ENABLE_EXPERIMENTAL
 
-ATP_ThirdPersonCharacter::ATP_ThirdPersonCharacter() : Phase(0.0f), ExtraDirectionSmooth(0.9f), StrafeAmount(0.0f)
+ATP_ThirdPersonCharacter::ATP_ThirdPersonCharacter() : Phase(0.0f), StrafeAmount(0.0f), ExtraDirectionSmooth(0.9f)
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -71,13 +67,10 @@ ATP_ThirdPersonCharacter::ATP_ThirdPersonCharacter() : Phase(0.0f), ExtraDirecti
 	PosableMesh->AllocateTransformData();
 	//skeletalmesh
 	//PFNN_SkeletalMesh->MeshObject ;
-
+	//BoneStep = 0;
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 }
-
-//////////////////////////////////////////////////////////////////////////
-// Input
 
 void ATP_ThirdPersonCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
@@ -85,6 +78,8 @@ void ATP_ThirdPersonCharacter::SetupPlayerInputComponent(class UInputComponent* 
 	check(PlayerInputComponent);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+
+
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ATP_ThirdPersonCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ATP_ThirdPersonCharacter::MoveRight);
@@ -96,16 +91,17 @@ void ATP_ThirdPersonCharacter::SetupPlayerInputComponent(class UInputComponent* 
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &ATP_ThirdPersonCharacter::LookUpAtRate);
 
+	//PlayerInputComponent->BindAction("Up", IE_Pressed, this, &ATP_ThirdPersonCharacter::DebugUp);
+	//PlayerInputComponent->BindAction("Down", IE_Pressed, this, &ATP_ThirdPersonCharacter::DebugDown);
+
 }
 
 glm::vec3 ATP_ThirdPersonCharacter::MixDirections(const glm::vec3 arg_XDirection, const glm::vec3 arg_YDirection,	const float arg_Scalar)
 {
-	//TODO: Re enable this function
-	//const glm::quat XQuat = glm::angleAxis(atan2f(arg_XDirection.y, arg_XDirection.x), glm::vec3(1, 0, 0));
-	//const glm::quat YQuat = glm::angleAxis(atan2f(arg_YDirection.y, arg_YDirection.x), glm::vec3(1, 0, 0));
-	//const glm::quat ZQuat = glm::slerp(XQuat, YQuat, arg_Scalar); 
-	//return ZQuat * glm::vec3(0, 0, 1);
-	return glm::vec3(0);
+	const glm::quat XQuat = glm::angleAxis(atan2f(arg_XDirection.y, arg_XDirection.x), glm::vec3(0, 0, 1));
+	const glm::quat YQuat = glm::angleAxis(atan2f(arg_YDirection.y, arg_YDirection.x), glm::vec3(0, 0, 1));
+	const glm::quat ZQuat = glm::slerp(XQuat, YQuat, arg_Scalar);
+	return ZQuat * glm::vec3(0, 1, 0);
 }
 
 glm::quat ATP_ThirdPersonCharacter::QuaternionExpression(const glm::vec3 arg_Length)
@@ -126,137 +122,6 @@ float ATP_ThirdPersonCharacter::ScaleBetween(const float arg_Unscaled, const flo
 	return (arg_Unscaled - arg_Min) / (arg_Max - arg_Min);
 }
 
-void ATP_ThirdPersonCharacter::DrawDebugPoints()
-{
-	for(int i = 0; i < JOINT_NUM; i++)
-	{
-		DrawDebugPoint(GetWorld(), FVector(JointPosition[i].x, JointPosition[i].y, JointPosition[i].z), 10, FColor::Red, false, 0.03f);
-	}
-
-	DrawDebugTrajectory();
-	//DrawDebugUI();
-}
-
-void ATP_ThirdPersonCharacter::DrawDebugTrajectory()
-{
-	const float MajorPointSize = 15.0f;
-	const float MinorPointSize = 5.0f;
-	const float PointOffset = 2.0f;
-
-	const auto StartingPoint	= Trajectory->Positions[0];							//Get the leading point of the trajectory
-	const auto MidPoint			= Trajectory->Positions[UPFNNTrajectory::LENGTH/2]; //Get the mid point/player point of the trajectory
-	const auto EndingPoint		= Trajectory->Positions[UPFNNTrajectory::LENGTH-1];	//Get the ending point of the trajectory
-
-
-	///*Red		End		-	Start*/	DrawDebugLine(GetWorld(), FVector(StartingPoint.x, StartingPoint.y, StartingPoint.z), FVector(EndingPoint.x, EndingPoint.y, EndingPoint.z), FColor::Red, false, -1, 0, 3);
-	///*Green		Pos		-	End*/	DrawDebugLine(GetWorld(), GetActorLocation(), FVector(StartingPoint.x, StartingPoint.y, StartingPoint.z), FColor::Blue, false, -1, 0, 3);
-	///*Yellow	Pos		-	Mid*/	DrawDebugLine(GetWorld(), GetActorLocation(), FVector(MidPoint.x, MidPoint.y, MidPoint.z), FColor::Yellow, false, -1, 0, 3);
-	///*Blue		Pos		-	Start*/	DrawDebugLine(GetWorld(), GetActorLocation(), FVector(EndingPoint.x, EndingPoint.y, EndingPoint.z), FColor::Green, false, -1, 0, 3);
-
-	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Green,	FString::Printf(TEXT("Starting point = %f %f %f"), StartingPoint.x, StartingPoint.y, StartingPoint.z));
-	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow,	FString::Printf(TEXT("Middle point = %f %f %f"), MidPoint.x, MidPoint.y, MidPoint.z));
-	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Blue,	FString::Printf(TEXT("Ending point = %f %f %f"), EndingPoint.x, EndingPoint.y, EndingPoint.z));
-	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Red,	FString::Printf(TEXT("Player point = %f %f %f"), GetActorLocation().X, GetActorLocation().Y, GetActorLocation().Z));
-
-	for(int i = 0; i < UPFNNTrajectory::LENGTH-10; i++)	//Show minor points
-	{
-		const auto PointPosition = Trajectory->Positions[i];
-		const auto PointColor = FColor(Trajectory->GaitStand[i] * 255, Trajectory->GaitJog[i] * 255, Trajectory->GaitWalk[i] * 255);
-
-		//const auto UPointPoisiton = FVector(ScaleBetween(PointPosition.x, 0.0f, 7.5f) * 600.0f, ScaleBetween(PointPosition.y, 0.0f, 7.5f) * 600.0f + PointOffset, ScaleBetween(PointPosition.z, 0.0f, 7.5f) * 600.0f);
-		const auto UPointPoisiton = FVector(PointPosition.x, PointPosition.y, PointOffset);
-
-		DrawDebugPoint(GetWorld(), UPointPoisiton, MinorPointSize, PointColor, false, 0.03f);
-	}
-
-	for(int i = 0; i < UPFNNTrajectory::LENGTH; i+=10) //Show major points
-	{
-		const auto PointPosition = Trajectory->Positions[i];
-		const auto PointColor = FColor(Trajectory->GaitStand[i] * 255 , Trajectory->GaitJog[i] * 255, Trajectory->GaitWalk[i] * 255);
-
-		//const auto UPointPoisiton = FVector(ScaleBetween(PointPosition.x, 0.0f, 7.5f) * 600.0f, ScaleBetween(PointPosition.y, 0.0f, 7.5f) * 600.0f + PointOffset, ScaleBetween(PointPosition.z, 0.0f, 7.5f) * 600.0f);
-		const auto UPointPoisiton = FVector(PointPosition.x, PointPosition.y, PointOffset);
-
-		DrawDebugPoint(GetWorld(), UPointPoisiton, MajorPointSize, PointColor, false, 0.03f);
-	}
-
-	for(int i = 0; i < UPFNNTrajectory::LENGTH; i+=10) //Show major hieghts
-	{
-		const auto PointPositionRight = Trajectory->Positions[i] + Trajectory->Rotations[i] * glm::vec3( Trajectory->Width, 0, 0);
-		const auto PointPositionLeft = Trajectory->Positions[i] + Trajectory->Rotations[i] * glm::vec3(-Trajectory->Width, 0, 0);
-		const auto PointColor = FColor(Trajectory->GaitStand[i] * 255, Trajectory->GaitJog[i] * 255, Trajectory->GaitWalk[i] * 255);
-
-
-		DrawDebugPoint(GetWorld(), FVector(PointPositionRight.x,	PointPositionRight.y,	PointPositionRight.z + PointOffset),	MinorPointSize, PointColor, false, 0.03f);
-		DrawDebugPoint(GetWorld(), FVector(PointPositionLeft.x,		PointPositionLeft.y,	PointPositionLeft.z + PointOffset),		MinorPointSize, PointColor, false, 0.03f);
-	}
-
-	for(int i = 0; i < UPFNNTrajectory::LENGTH; i+=10) //Draw arrows
-	{
-		const float ArrowHeadLenth = 4.0f;
-
-		auto Base	= Trajectory->Positions[i] + glm::vec3(0.0f, PointOffset, 0.0f);
-		auto Side	= glm::normalize(glm::cross(Trajectory->Directions[i], glm::vec3(0.0f, 1.0f, 0.0f)));
-		glm::vec3 Forward = Base + 15.0f * Trajectory->Directions[i];
-		const auto PointColor = FColor(Trajectory->GaitStand[i] * 255, Trajectory->GaitJog[i] * 255, Trajectory->GaitWalk[i] * 255);
-
-		FCollisionQueryParams TraceParams = FCollisionQueryParams(FName(TEXT("GroundGeometryTrace")), true, this);
-		TraceParams.bTraceComplex = true;
-		TraceParams.bTraceAsyncScene = true;
-		TraceParams.bReturnPhysicalMaterial = false;
-
-		const float DistanceLenght = 10000;
-		FHitResult HitResult(ForceInit);
-
-		GetWorld()->LineTraceSingleByChannel(HitResult, FVector(Forward.x, Forward.y + PointOffset, Forward.z), -FVector::UpVector * DistanceLenght, ECC_Pawn, TraceParams);
-		Forward.z = HitResult.Location.Z;
-		Forward.z = 0; //DEBUG: Can be removed
-
-		const glm::vec3 Arrow0 = Forward + ArrowHeadLenth * Side + ArrowHeadLenth * -Trajectory->Directions[i];
-		const glm::vec3 Arrow1 = Forward - ArrowHeadLenth * Side + ArrowHeadLenth * -Trajectory->Directions[i];
-
-		//const auto UArrow0 = FVector(Arrow0.x, Arrow0.y, Arrow0.z);
-		const auto UArrow0 = FVector(Arrow0.x, Arrow0.y, 0);
-		//const auto UArrow1 = FVector(Arrow1.x, Arrow1.y, Arrow1.z);
-		const auto UArrow1 = FVector(Arrow1.x, Arrow1.y, 0);
-
-		DrawDebugLine(GetWorld(), FVector(Forward.x, Forward.y, Forward.z), UArrow0, PointColor, false, -1, 0, 1);
-		DrawDebugLine(GetWorld(), FVector(Forward.x, Forward.y, Forward.z), UArrow1, PointColor, false, -1, 0, 1);
-		DrawDebugLine(GetWorld(), FVector(Base.x, Base.y, Base.z), FVector(Forward.x, Forward.y, Forward.z), PointColor, false, -1, 0, 1);
-
-
-	}
-}
-
-void ATP_ThirdPersonCharacter::DrawDebugUI()
-{
-	//Phase circle
-	//const float CircleStepSize = 0.1f;
-	//for(int i = 0; i < 2*PI; i+= CircleStepSize)
-	//{
-	//	const auto LineStart	= FVector(static_cast<float>(GEngine->GameViewport->Viewport->GetSizeXY().X) - 125 + 50*FMath::Cos(i				 ), 100.0f+50.0f*FMath::Sin(i				  ), 0.0f);
-	//	const auto LineEnd		= FVector(static_cast<float>(GEngine->GameViewport->Viewport->GetSizeXY().X) - 125 + 50*FMath::Cos(i + CircleStepSize), 100.0f+50.0f*FMath::Sin(i + CircleStepSize), 0.0f);
-	//	DrawDebugLine(GetWorld(), LineStart, LineEnd, FColor::Black, false, -1, 0, 1);	
-	//}
-	
-
-	/*DrawDebugPoint(GetWorld(), FVector(static_cast<float>(GEngine->GameViewport->Viewport->GetSizeXY().X) - 125 + 50 * FMath::Cos(Phase), 100 + 50 * FMath::Sin(Phase), 0), 1.0f, FColor::Red, false, 0.03f);
-	
-	const auto Pindex1 = static_cast<int>(Phase / (2 * PI) * 50);
-	Eigen::MatrixXf W0p = PFNN_SkeletalMesh->PFNN->W0[Pindex1];
-
-	for(int x = 0; x < W0p.rows(); x++)
-	{
-		for(int y = 0; y < W0p.cols(); y++)
-		{
-			const float value = (W0p(x, y) + 0.5f) / 2.0f;
-			const glm::vec3 color = value > 0.5f ? glm::mix(glm::vec3(1, 0, 0), glm::vec3(0, 0, 1), value - 0.5f) : glm::mix(glm::vec3(0, 1, 0), glm::vec3(0, 0, 1), value*2.0f);
-			DrawDebugPoint(GetWorld(), FVector(static_cast<float>( W0p.cols() + y - 25.0f), x, 0.0f), 2.0f, FColor(color.r, color.g, color.b), false, 0.03f);
-		}
-	}*/
-	
-}
-
 void ATP_ThirdPersonCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -269,8 +134,10 @@ void ATP_ThirdPersonCharacter::Tick(float DeltaSeconds)
 	//TODO: Change devisions to multiplications since these are faster. -Feedback from dyon.
 
 	Super::Tick(DeltaSeconds);
+#if !UE_BUILD_SHIPPING
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Orange, FString::Printf(TEXT("Detla seconds = %f"), DeltaSeconds));
 	DrawDebugPoints();
+#endif
 
 	if (Trajectory == nullptr)
 	{
@@ -278,32 +145,33 @@ void ATP_ThirdPersonCharacter::Tick(float DeltaSeconds)
 		return;
 	}
 
-	//CurrentFrameInput.x = CurrentFrameInput.x * -1.0f;
-	//CurrentFrameInput.y = CurrentFrameInput.y * -1.0f;
 	if (glm::abs(CurrentFrameInput.x) + glm::abs(CurrentFrameInput.y) < 0.305f)
 	{
 		CurrentFrameInput = glm::vec2(0);
 	}
 
+	//TO VALIDATE: Input rotation might be incorrect
 	glm::vec3 TrajectoryTargetDirectionNew = glm::normalize(glm::vec3(GetActorForwardVector().X, GetActorForwardVector().Y, 0.0f));
 	const glm::mat3 TrajectoryTargetRotation = glm::mat3(glm::rotate(atan2f(
 			TrajectoryTargetDirectionNew.y,
 			TrajectoryTargetDirectionNew.x), glm::vec3(0, 0, 1)));
 
-	//const float TargetVelocitySpeed = ScaleBetween(GetMovementComponent()->GetMaxSpeed(), 0.0f, 600.0f) * 7.5f; //TODO: Check multiplication
-	const float TargetVelocitySpeed = GetVelocity().SizeSquared() / (GetMovementComponent()->GetMaxSpeed() * GetMovementComponent()->GetMaxSpeed()) * 7.5f; //TODO: Check multiplication
+	const float TargetVelocitySpeed = GetVelocity().SizeSquared() / (GetMovementComponent()->GetMaxSpeed() * GetMovementComponent()->GetMaxSpeed()) * 7.5f; //7.5 is current training walking speed
 
-	const glm::vec3 TrajectoryTargetVelocityNew = TargetVelocitySpeed * (TrajectoryTargetRotation * glm::vec3(1, 0, 0.0f));
+
+	//TO VALIDATE: Target velocity being incorrect
+	const glm::vec3 TrajectoryTargetVelocityNew = TargetVelocitySpeed * (TrajectoryTargetRotation * glm::vec3(1, 0, 0));
 	const glm::vec3 TTVNTEMP = glm::normalize(TrajectoryTargetVelocityNew);
-	Trajectory->TargetVelocity = Trajectory->TargetVelocity;
 	//Trajectory->TargetVelocity = glm::mix(Trajectory->TargetVelocity, TrajectoryTargetVelocityNew, Trajectory->ExtraVelocitySmooth);
 
 	//TODO: Add strafing data
-	StrafeAmount = glm::mix(StrafeAmount, StrafeTarget, ExtraStrafeSmooth);
+	//StrafeAmount = glm::mix(StrafeAmount, StrafeTarget, ExtraStrafeSmooth);
 	const glm::vec3 TrajectoryTargetVelocityDirection = glm::length(Trajectory->TargetVelocity) < 1e-05 ? Trajectory->TargetDirection : glm::normalize(Trajectory->TargetVelocity);
-	//TrajectoryTargetDirectionNew			= MixDirections(TrajectoryTargetVelocityDirection, TrajectoryTargetDirectionNew, StrafeAmount);
-	Trajectory->TargetDirection = TrajectoryTargetDirectionNew;//MixDirections(Trajectory->TargetDirection, TrajectoryTargetDirectionNew, ExtraDirectionSmooth);
-	//Trajectory->TargetDirection				= MixDirections(Trajectory->TargetDirection, TrajectoryTargetDirectionNew, ExtraDirectionSmooth);
+	//TrajectoryTargetDirectionNew	= MixDirections(TrajectoryTargetVelocityDirection, TrajectoryTargetDirectionNew, StrafeAmount);
+	Trajectory->TargetDirection		= MixDirections(Trajectory->TargetDirection, TrajectoryTargetVelocityNew, ExtraDirectionSmooth);
+#if !UE_BUILD_SHIPPING
+	DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + FVector(TTVNTEMP.x, TTVNTEMP.y, TTVNTEMP.z) * 100, FColor::Red, false, -1, 1, 2);
+	DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + FVector(Trajectory->TargetDirection.x, Trajectory->TargetDirection.y, Trajectory->TargetDirection.z) * 100, FColor::Blue, false, -1, 1, 2);
 	
 	//TODO: Add crouching
 
@@ -312,8 +180,7 @@ void ATP_ThirdPersonCharacter::Tick(float DeltaSeconds)
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Blue, FString::Printf(TEXT("Current frame input = %f %f"), CurrentFrameInput.x, CurrentFrameInput.y));
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Blue, FString::Printf(TEXT("Target direction new = %f %f %f"), TrajectoryTargetDirectionNew.x, TrajectoryTargetDirectionNew.y, TrajectoryTargetDirectionNew.z));
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow, FString::Printf(TEXT("Reduced speed = %f"), TargetVelocitySpeed));
-	DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + FVector(TTVNTEMP.x, TTVNTEMP.y, TTVNTEMP.z) * 100, FColor::Red, false, -1, 1, 2);
-
+#endif
 	//Updating of the gaits
 	const float MovementCutOff = 0.01f;
 	const float JogCuttoff = 0.5f;
@@ -351,9 +218,10 @@ void ATP_ThirdPersonCharacter::Tick(float DeltaSeconds)
 
 
 	//Predicting future trajectory
+	//TO VALIDATE: Calculations might be incorrect
 	glm::vec3 TrajectoryPositionsBlend[UPFNNTrajectory::LENGTH];
 	TrajectoryPositionsBlend[UPFNNTrajectory::LENGTH / Half] = Trajectory->Positions[UPFNNTrajectory::LENGTH / Half];
-#if 0
+#if 1
 	for (int i = UPFNNTrajectory::LENGTH / Half + 1; i < UPFNNTrajectory::LENGTH; i++)
 	{
 		const float BiasPosition	= Responsive ? glm::mix(2.0f, 2.0f, StrafeAmount) : glm::mix(0.5f, 1.0f, StrafeAmount);
@@ -362,7 +230,7 @@ void ATP_ThirdPersonCharacter::Tick(float DeltaSeconds)
 		const float ScalePosition	= (1.0f - powf(1.0f - (static_cast<float>(i - UPFNNTrajectory::LENGTH / Half) / (UPFNNTrajectory::LENGTH / Half)), BiasPosition));
 		const float ScaleDirection	= (1.0f - powf(1.0f - (static_cast<float>(i - UPFNNTrajectory::LENGTH / Half) / (UPFNNTrajectory::LENGTH / Half)), BiasDirection));
 
-		TrajectoryPositionsBlend[i] = TrajectoryPositionsBlend[i - 1] + Trajectory->TargetVelocity * DeltaSeconds; //glm::mix(Trajectory->Positions[i] - Trajectory->Positions[i - 1], Trajectory->TargetVelocity * DeltaTime, ScalePosition);
+		TrajectoryPositionsBlend[i] = glm::mix(Trajectory->Positions[i] - Trajectory->Positions[i - 1], Trajectory->TargetVelocity * DeltaSeconds, ScalePosition);
 
 		//TODO: Add wall colision for future trajectory - 1519
 
@@ -380,16 +248,17 @@ void ATP_ThirdPersonCharacter::Tick(float DeltaSeconds)
 #endif
 	for (int i = UPFNNTrajectory::LENGTH / Half + 1; i < UPFNNTrajectory::LENGTH; i++)
 	{
-		//Trajectory->Positions[i] += Trajectory->TargetVelocity * DeltaSeconds;// TrajectoryPositionsBlend[i];
+		Trajectory->Positions[i] += Trajectory->TargetVelocity * TrajectoryPositionsBlend[i];
 	}
 	//TODO: Add jumping here 
 	//for(int i = UPFNNTrajectory::LENGTH / Half; i < UPFNNTrajectory::LENGTH; i++)
 	//Trajectory->GaitJump[i] = Distance from ground
 
 	//Trajectory rotation
+	//TO VALIDATE: Check ATAN2 function
 	for (int i = 0; i < UPFNNTrajectory::LENGTH; i++)
 	{
-		Trajectory->Rotations[i] = glm::mat3(glm::rotate(atan2f(Trajectory->Directions[i].x, Trajectory->Directions[i].y), glm::vec3(0, 0, 1)));
+		Trajectory->Rotations[i] = glm::mat3(glm::rotate(atan2f(Trajectory->Directions[i].y, Trajectory->Directions[i].x), glm::vec3(0, 0, 1)));
 	}
 
 
@@ -417,15 +286,15 @@ void ATP_ThirdPersonCharacter::Tick(float DeltaSeconds)
 		Trajectory->Heights[UPFNNTrajectory::LENGTH / Half] += Trajectory->Positions[i].z / (UPFNNTrajectory::LENGTH / TrajectoryPointStepSize);
 	}
 
-	/*const glm::vec3 RootPosition = glm::vec3(
+	const glm::vec3 RootPosition = glm::vec3(
 		Trajectory->Positions[UPFNNTrajectory::LENGTH / Half].x + GetActorLocation().X,
 		Trajectory->Positions[UPFNNTrajectory::LENGTH / Half].y + GetActorLocation().Y,
-		///*Trajectory->Heights[UPFNNTrajectory::LENGTH / Half]0.0f);*/
-
-	const glm::vec3 RootPosition = glm::vec3(
-		 GetActorLocation().X,
-		 GetActorLocation().Y,
 		/*Trajectory->Heights[UPFNNTrajectory::LENGTH / Half]*/0.0f);
+
+	//const glm::vec3 RootPosition = glm::vec3(
+	//	 GetActorLocation().X,
+	//	 GetActorLocation().Y,
+	//	/*Trajectory->Heights[UPFNNTrajectory::LENGTH / Half]*/0.0f);
 
 
 	const glm::mat3 RootRotation = Trajectory->Rotations[UPFNNTrajectory::LENGTH / Half];
@@ -459,9 +328,7 @@ void ATP_ThirdPersonCharacter::Tick(float DeltaSeconds)
 		Trajectory->Positions[UPFNNTrajectory::LENGTH / Half - 1].x,
 		Trajectory->Positions[UPFNNTrajectory::LENGTH / Half - 1].y,
 		/*Trajectory->Heights[UPFNNTrajectory::LENGTH / Half - 1]*/0.0f);
-
 	const glm::mat3 PreviousRootRotation = Trajectory->Rotations[UPFNNTrajectory::LENGTH / Half - 1];
-
 	for (int i = 0; i < JOINT_NUM; i++)
 	{
 		const int o = (((UPFNNTrajectory::LENGTH) / TrajectoryPointStepSize)*TrajectoryPointStepSize);
@@ -580,8 +447,8 @@ void ATP_ThirdPersonCharacter::Tick(float DeltaSeconds)
 	Trajectory->Positions[UPFNNTrajectory::LENGTH / Half]	= Trajectory->Positions[UPFNNTrajectory::LENGTH / Half] + StandAmount * TrajectoryUpdate;
 	Trajectory->Directions[UPFNNTrajectory::LENGTH / Half]	= glm::mat3(glm::rotate(StandAmount * -PFNN_SkeletalMesh->PFNN->Yp(2), glm::vec3(0, 0, 1))) * Trajectory->Directions[UPFNNTrajectory::LENGTH / Half]; //TODEBUG: Rot
 	Trajectory->Rotations[UPFNNTrajectory::LENGTH / Half]	= glm::mat3(glm::rotate(glm::atan(
-		Trajectory->Directions[UPFNNTrajectory::LENGTH / Half].x,
-		Trajectory->Directions[UPFNNTrajectory::LENGTH / Half].y), glm::vec3(0, 0, 1)));
+		Trajectory->Directions[UPFNNTrajectory::LENGTH / Half].y,
+		Trajectory->Directions[UPFNNTrajectory::LENGTH / Half].x), glm::vec3(0, 0, 1)));
 
 	//TODO: Add wall logic
 
@@ -591,31 +458,24 @@ void ATP_ThirdPersonCharacter::Tick(float DeltaSeconds)
 	//int i = UPFNNTrajectory::LENGTH - 1;
 		const int W = (UPFNNTrajectory::LENGTH / Half) / TrajectoryPointStepSize;
 		const float M = fmod((static_cast<float>(i) - (UPFNNTrajectory::LENGTH / Half)) / TrajectoryPointStepSize, 1.0f);
-		Trajectory->Positions[i].x = (glm::normalize(TrajectoryTargetDirectionNew).x * 5);
-		Trajectory->Positions[i].y = (glm::normalize(TrajectoryTargetDirectionNew).y * 5);
-		Trajectory->Directions[i].x = TrajectoryTargetDirectionNew.x;
-		Trajectory->Directions[i].y = TrajectoryTargetDirectionNew.y;
-
-		//Trajectory->Positions[i].x	= (1 - M) * PFNN_SkeletalMesh->PFNN->Yp(InputLayerSkip + (W * 0) + (i / TrajectoryPointStepSize) - W) + M * PFNN_SkeletalMesh->PFNN->Yp(InputLayerSkip + (W * 0) + (i / TrajectoryPointStepSize) - W + 1); //TODEBUG: Rot
-		//Trajectory->Positions[i].y	= (1 - M) * PFNN_SkeletalMesh->PFNN->Yp(InputLayerSkip + (W * 1) + (i / TrajectoryPointStepSize) - W) + M * PFNN_SkeletalMesh->PFNN->Yp(InputLayerSkip + (W * 1) + (i / TrajectoryPointStepSize) - W + 1); //TODEBUG: Rot
-		//Trajectory->Directions[i].x = (1 - M) * PFNN_SkeletalMesh->PFNN->Yp(InputLayerSkip + (W * 2) + (i / TrajectoryPointStepSize) - W) + M * PFNN_SkeletalMesh->PFNN->Yp(InputLayerSkip + (W * 2) + (i / TrajectoryPointStepSize) - W + 1); //TODEBUG: Rot
-		//Trajectory->Directions[i].y = (1 - M) * PFNN_SkeletalMesh->PFNN->Yp(InputLayerSkip + (W * 3) + (i / TrajectoryPointStepSize) - W) + M * PFNN_SkeletalMesh->PFNN->Yp(InputLayerSkip + (W * 3) + (i / TrajectoryPointStepSize) - W + 1); //TODEBUG: Rot
-		//
+		//Trajectory->Positions[i].x = (glm::normalize(TrajectoryTargetDirectionNew).x);
+		//Trajectory->Positions[i].y = (glm::normalize(TrajectoryTargetDirectionNew).y);
+		//Trajectory->Directions[i].x = TrajectoryTargetDirectionNew.x;
+		//Trajectory->Directions[i].y = TrajectoryTargetDirectionNew.y;
+	
+		Trajectory->Positions[i].x	= (1 - M) * PFNN_SkeletalMesh->PFNN->Yp(InputLayerSkip + (W * 0) + (i / TrajectoryPointStepSize) - W) + M * PFNN_SkeletalMesh->PFNN->Yp(InputLayerSkip + (W * 0) + (i / TrajectoryPointStepSize) - W + 1); //TODEBUG: Rot
+		Trajectory->Positions[i].y	= (1 - M) * PFNN_SkeletalMesh->PFNN->Yp(InputLayerSkip + (W * 1) + (i / TrajectoryPointStepSize) - W) + M * PFNN_SkeletalMesh->PFNN->Yp(InputLayerSkip + (W * 1) + (i / TrajectoryPointStepSize) - W + 1); //TODEBUG: Rot
+		Trajectory->Directions[i].x = (1 - M) * PFNN_SkeletalMesh->PFNN->Yp(InputLayerSkip + (W * 2) + (i / TrajectoryPointStepSize) - W) + M * PFNN_SkeletalMesh->PFNN->Yp(InputLayerSkip + (W * 2) + (i / TrajectoryPointStepSize) - W + 1); //TODEBUG: Rot
+		Trajectory->Directions[i].y = (1 - M) * PFNN_SkeletalMesh->PFNN->Yp(InputLayerSkip + (W * 3) + (i / TrajectoryPointStepSize) - W) + M * PFNN_SkeletalMesh->PFNN->Yp(InputLayerSkip + (W * 3) + (i / TrajectoryPointStepSize) - W + 1); //TODEBUG: Rot
+		
 		Trajectory->Positions[i]	= (Trajectory->Rotations[UPFNNTrajectory::LENGTH / Half] * Trajectory->Positions[i]) + Trajectory->Positions[UPFNNTrajectory::LENGTH / Half];
 		Trajectory->Directions[i]	= glm::normalize((Trajectory->Rotations[UPFNNTrajectory::LENGTH / Half] * Trajectory->Directions[i]));
-		Trajectory->Rotations[i]	= glm::mat3(glm::rotate(atan2f(Trajectory->Directions[i].x, Trajectory->Directions[i].y), glm::vec3(0, 0, 1)));
+		Trajectory->Rotations[i]	= glm::mat3(glm::rotate(atan2f(Trajectory->Directions[i].y, Trajectory->Directions[i].x), glm::vec3(0, 0, 1)));
 	}
 
 
 	//Update the phase
 	Phase = fmod(Phase + (StandAmount * 0.9f + 0.1f) * 2.0f * PI * PFNN_SkeletalMesh->PFNN->Yp(3), 2.0f * PI);
-
-	//for (int i = 0; i < JOINT_NUM; i++)
-	//{
-	//	JointMeshXform[i] = glm::rotate(JointMeshXform[i], 90.0f, glm::vec3(1, 0, 0)); //Rotating the final mesh bones 90 degrees over the X axis
-	//	JointGlobalAnimXform[i] = glm::rotate(JointMeshXform[i], 90.0f, glm::vec3(1, 0, 0)); //Rotating the final mesh bones 90 degrees over the X axis
-	//	JointGlobalRestXform[i] = glm::rotate(JointMeshXform[i], 90.0f, glm::vec3(1, 0, 0)); //Rotating the final mesh bones 90 degrees over the X axis
-	//}
 
 	TArray<FVector> FinalBoneLocations;
 	TArray<FQuat>	FinalBoneRotations;
@@ -633,30 +493,60 @@ void ATP_ThirdPersonCharacter::Tick(float DeltaSeconds)
 		UMatrix.M[0][2] = JointMeshXform[i][0][2];	UMatrix.M[1][2] = JointMeshXform[i][1][2];	UMatrix.M[2][2] = JointMeshXform[i][2][2];	UMatrix.M[3][2] = JointMeshXform[i][3][2];
 		UMatrix.M[0][3] = 0;						UMatrix.M[1][3] = 0;						UMatrix.M[2][3] = 0;						UMatrix.M[3][3] = 1;
 
-		FinalBoneRotations[i] = FQuat(1, 0, 0, 0);
+		const glm::quat Rotation = JointRotations[i];
+		FinalBoneRotations[i] = FQuat(Rotation.x, Rotation.z, Rotation.y, Rotation.w);
 	}
 
 	FSkeletonData SkeletonData;
 	SkeletonData.BonePositions	= FinalBoneLocations;
 	SkeletonData.BoneRotations	= FinalBoneRotations;
-	SkeletonData.Scale = FinalScale;
+	SkeletonData.Scale = FinalScale;	
 
+	PoseMesh(SkeletonData);
 
-	for (int32 i = 0; i < JOINT_NUM; i++)
-	{
-		const FName BoneName = PosableMesh->GetBoneName(i);
-
-		const FTransform BoneTransform(SkeletonData.BoneRotations[i], SkeletonData.BonePositions[i]);
-		PosableMesh->SetBoneTransformByName(BoneName, BoneTransform, EBoneSpaces::WorldSpace);
-	}
 	PosableMesh->SetWorldScale3D(FVector(SkeletonData.Scale));
 
+	SetActorLocation(FVector(Trajectory->Positions[UPFNNTrajectory::LENGTH / Half].x, Trajectory->Positions[UPFNNTrajectory::LENGTH / Half].y, Trajectory->Positions[UPFNNTrajectory::LENGTH / Half].z));
+#if !UE_BUILD_SHIPPING
 
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow, FString::Printf(TEXT("Trajectory->GaitStand half = %f"), Trajectory->GaitStand[UPFNNTrajectory::LENGTH / Half]));
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow, FString::Printf(TEXT("Trajectory->GaitWalk half = %f"), Trajectory->GaitWalk[UPFNNTrajectory::LENGTH / Half]));
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow, FString::Printf(TEXT("Trajectory->GaitJog half = %f"), Trajectory->GaitJog[UPFNNTrajectory::LENGTH / Half]));
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow, FString::Printf(TEXT("Trajectory->GaitJump half = %f"), Trajectory->GaitJump[UPFNNTrajectory::LENGTH / Half]));
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow, FString::Printf(TEXT("Trajectory->GaitBump half = %f"), Trajectory->GaitBump[UPFNNTrajectory::LENGTH / Half]));
+#endif
+}
+
+void ATP_ThirdPersonCharacter::PoseMesh(FSkeletonData arg_SkeletonData)
+{
+#if 1
+	for (int32 i = JOINT_NUM - 1; i > 0 ; i--)
+	{
+		const FName BoneName = PosableMesh->GetBoneName(i);
+	
+		const FTransform BoneTransform(arg_SkeletonData.BoneRotations[i], arg_SkeletonData.BonePositions[i]);
+		PosableMesh->SetBoneTransformByName(BoneName, BoneTransform, EBoneSpaces::WorldSpace);
+	}
+#endif
+
+	//BN stands for BoneName
+	//const auto BN_Root			= FName("Root");
+	//const auto BN_LHipjoint		= FName("LHipJoint");
+	//const auto BN_LeftUpLeg		= FName("LeftUpLeg");
+	//const auto BN_LeftLeg		= FName("LeftLeg");
+	//const auto BN_LeftFoot		= FName("LeftFoot");
+	//const auto BN_LeftToeBase	= FName("LeftToeBase");
+	//const auto BN_Root = FName("Root");
+	//const auto BN_Root = FName("Root");
+	//const auto BN_Root = FName("Root");
+
+	//PosableMesh->SetBoneTransformByName(BN_Root, arg_SkeletonData[JOINT_ROOT], EBoneSpaces::WorldSpace);
+	//PosableMesh->SetBoneTransformByName(BN_LHipjoint, arg_SkeletonData[JOINT_ROOT], EBoneSpaces::WorldSpace);
+	//PosableMesh->SetBoneTransformByName(BN_LeftUpLeg, arg_SkeletonData[JOINT_ROOT], EBoneSpaces::WorldSpace);
+	//PosableMesh->SetBoneTransformByName(BN_LeftLeg, arg_SkeletonData[JOINT_ROOT], EBoneSpaces::WorldSpace);
+	//PosableMesh->SetBoneTransformByName(BN_LeftFoot, arg_SkeletonData[JOINT_ROOT], EBoneSpaces::WorldSpace);
+	//PosableMesh->SetBoneTransformByName(BN_LeftToeBase, arg_SkeletonData[JOINT_ROOT], EBoneSpaces::WorldSpace);
+	//PosableMesh->SetBoneTransformByName(BN_Root, arg_SkeletonData[JOINT_ROOT], EBoneSpaces::WorldSpace);
 
 }
 
@@ -693,7 +583,7 @@ void ATP_ThirdPersonCharacter::Load()
 
 	for(int i = 0; i < JOINT_NUM; i++)
 	{
-		JointRestXform[i] = JointRestXform[i];
+		JointRestXform[i] = glm::transpose(JointRestXform[i]);
 	}
 
 	delete FileHandle;
@@ -742,3 +632,164 @@ void ATP_ThirdPersonCharacter::MoveRight(float Value)
 		AddMovementInput(Direction, Value);
 	}
 }
+
+#if !UE_BUILD_SHIPPING
+void ATP_ThirdPersonCharacter::DebugUp()
+{
+	BoneStep++;
+}
+void ATP_ThirdPersonCharacter::DebugDown()
+{
+	BoneStep--;
+}
+void ATP_ThirdPersonCharacter::DrawDebugPoints()
+{
+	for(int i = 0; i < JOINT_NUM; i++)
+	{
+		DrawDebugPoint(GetWorld(), FVector(JointPosition[i].x, JointPosition[i].y, JointPosition[i].z), 10, FColor::Red, false, 0.03f);
+	}
+
+	DrawDebugTrajectory();
+	//DrawDebugUI();
+}
+void ATP_ThirdPersonCharacter::DrawDebugTrajectory()
+{
+	const float MajorPointSize = 15.0f;
+	const float MinorPointSize = 5.0f;
+	const float PointOffset = 2.0f;
+
+	const auto StartingPoint	= Trajectory->Positions[0];							//Get the leading point of the trajectory
+	const auto MidPoint			= Trajectory->Positions[UPFNNTrajectory::LENGTH/2]; //Get the mid point/player point of the trajectory
+	const auto EndingPoint		= Trajectory->Positions[UPFNNTrajectory::LENGTH-1];	//Get the ending point of the trajectory
+
+
+	///*Red		End		-	Start*/	DrawDebugLine(GetWorld(), FVector(StartingPoint.x, StartingPoint.y, StartingPoint.z), FVector(EndingPoint.x, EndingPoint.y, EndingPoint.z), FColor::Red, false, -1, 0, 3);
+	///*Green		Pos		-	End*/	DrawDebugLine(GetWorld(), GetActorLocation(), FVector(StartingPoint.x, StartingPoint.y, StartingPoint.z), FColor::Blue, false, -1, 0, 3);
+	///*Yellow	Pos		-	Mid*/	DrawDebugLine(GetWorld(), GetActorLocation(), FVector(MidPoint.x, MidPoint.y, MidPoint.z), FColor::Yellow, false, -1, 0, 3);
+	///*Blue		Pos		-	Start*/	DrawDebugLine(GetWorld(), GetActorLocation(), FVector(EndingPoint.x, EndingPoint.y, EndingPoint.z), FColor::Green, false, -1, 0, 3);
+
+	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Green,	FString::Printf(TEXT("Starting point = %f %f %f"), StartingPoint.x, StartingPoint.y, StartingPoint.z));
+	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Yellow,	FString::Printf(TEXT("Middle point = %f %f %f"), MidPoint.x, MidPoint.y, MidPoint.z));
+	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Blue,	FString::Printf(TEXT("Ending point = %f %f %f"), EndingPoint.x, EndingPoint.y, EndingPoint.z));
+	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Red,	FString::Printf(TEXT("Player point = %f %f %f"), GetActorLocation().X, GetActorLocation().Y, GetActorLocation().Z));
+
+	for(int i = 0; i < UPFNNTrajectory::LENGTH-10; i++)	//Show minor points
+	{
+		const auto PointPosition = Trajectory->Positions[i];
+		const auto PointColor = FColor(Trajectory->GaitStand[i] * 255, Trajectory->GaitJog[i] * 255, Trajectory->GaitWalk[i] * 255);
+
+		//const auto UPointPoisiton = FVector(ScaleBetween(PointPosition.x, 0.0f, 7.5f) * 600.0f, ScaleBetween(PointPosition.y, 0.0f, 7.5f) * 600.0f + PointOffset, ScaleBetween(PointPosition.z, 0.0f, 7.5f) * 600.0f);
+		const auto UPointPoisiton = FVector(PointPosition.x, PointPosition.y, PointOffset);
+
+		DrawDebugPoint(GetWorld(), UPointPoisiton, MinorPointSize, PointColor, false, 0.03f);
+	}
+
+	for(int i = 0; i < UPFNNTrajectory::LENGTH; i+=10) //Show major points
+	{
+		const auto PointPosition = Trajectory->Positions[i];
+		const auto PointColor = FColor(Trajectory->GaitStand[i] * 255 , Trajectory->GaitJog[i] * 255, Trajectory->GaitWalk[i] * 255);
+
+		//const auto UPointPoisiton = FVector(ScaleBetween(PointPosition.x, 0.0f, 7.5f) * 600.0f, ScaleBetween(PointPosition.y, 0.0f, 7.5f) * 600.0f + PointOffset, ScaleBetween(PointPosition.z, 0.0f, 7.5f) * 600.0f);
+		const auto UPointPoisiton = FVector(PointPosition.x, PointPosition.y, PointOffset);
+
+		DrawDebugPoint(GetWorld(), UPointPoisiton, MajorPointSize, PointColor, false, 0.03f);
+	}
+
+	for(int i = 0; i < UPFNNTrajectory::LENGTH; i+=10) //Show major hieghts
+	{
+		const auto PointPositionRight = Trajectory->Positions[i] + Trajectory->Rotations[i] * glm::vec3( Trajectory->Width, 0, 0);
+		const auto PointPositionLeft = Trajectory->Positions[i] + Trajectory->Rotations[i] * glm::vec3(-Trajectory->Width, 0, 0);
+		const auto PointColor = FColor(Trajectory->GaitStand[i] * 255, Trajectory->GaitJog[i] * 255, Trajectory->GaitWalk[i] * 255);
+
+
+		DrawDebugPoint(GetWorld(), FVector(PointPositionRight.x,	PointPositionRight.y,	PointPositionRight.z + PointOffset),	MinorPointSize, PointColor, false, 0.03f);
+		DrawDebugPoint(GetWorld(), FVector(PointPositionLeft.x,		PointPositionLeft.y,	PointPositionLeft.z + PointOffset),		MinorPointSize, PointColor, false, 0.03f);
+	}
+
+	for(int i = 0; i < UPFNNTrajectory::LENGTH; i+=10) //Draw arrows
+	{
+		const float ArrowHeadLenth = 4.0f;
+
+		auto Base	= Trajectory->Positions[i] + glm::vec3(0.0f, PointOffset, 0.0f);
+		auto Side	= glm::normalize(glm::cross(Trajectory->Directions[i], glm::vec3(0.0f, 1.0f, 0.0f)));
+		glm::vec3 Forward = Base + 15.0f * Trajectory->Directions[i];
+		const auto PointColor = FColor(Trajectory->GaitStand[i] * 255, Trajectory->GaitJog[i] * 255, Trajectory->GaitWalk[i] * 255);
+
+		FCollisionQueryParams TraceParams = FCollisionQueryParams(FName(TEXT("GroundGeometryTrace")), true, this);
+		TraceParams.bTraceComplex = true;
+		TraceParams.bTraceAsyncScene = true;
+		TraceParams.bReturnPhysicalMaterial = false;
+
+		const float DistanceLenght = 10000;
+		FHitResult HitResult(ForceInit);
+
+		GetWorld()->LineTraceSingleByChannel(HitResult, FVector(Forward.x, Forward.y + PointOffset, Forward.z), -FVector::UpVector * DistanceLenght, ECC_Pawn, TraceParams);
+		Forward.z = HitResult.Location.Z;
+		Forward.z = 0; //DEBUG: Can be removed
+
+		const glm::vec3 Arrow0 = Forward + ArrowHeadLenth * Side + ArrowHeadLenth * -Trajectory->Directions[i];
+		const glm::vec3 Arrow1 = Forward - ArrowHeadLenth * Side + ArrowHeadLenth * -Trajectory->Directions[i];
+
+		//const auto UArrow0 = FVector(Arrow0.x, Arrow0.y, Arrow0.z);
+		const auto UArrow0 = FVector(Arrow0.x, Arrow0.y, 0);
+		//const auto UArrow1 = FVector(Arrow1.x, Arrow1.y, Arrow1.z);
+		const auto UArrow1 = FVector(Arrow1.x, Arrow1.y, 0);
+
+		DrawDebugLine(GetWorld(), FVector(Forward.x, Forward.y, Forward.z), UArrow0, PointColor, false, -1, 0, 1);
+		DrawDebugLine(GetWorld(), FVector(Forward.x, Forward.y, Forward.z), UArrow1, PointColor, false, -1, 0, 1);
+		DrawDebugLine(GetWorld(), FVector(Base.x, Base.y, Base.z), FVector(Forward.x, Forward.y, Forward.z), PointColor, false, -1, 0, 1);
+
+
+	}
+}
+//void ATP_ThirdPersonCharacter::DrawDebugUI()
+//{
+//	//Phase circle
+//	//const float CircleStepSize = 0.1f;
+//	//for(int i = 0; i < 2*PI; i+= CircleStepSize)
+//	//{
+//	//	const auto LineStart	= FVector(static_cast<float>(GEngine->GameViewport->Viewport->GetSizeXY().X) - 125 + 50*FMath::Cos(i				 ), 100.0f+50.0f*FMath::Sin(i				  ), 0.0f);
+//	//	const auto LineEnd		= FVector(static_cast<float>(GEngine->GameViewport->Viewport->GetSizeXY().X) - 125 + 50*FMath::Cos(i + CircleStepSize), 100.0f+50.0f*FMath::Sin(i + CircleStepSize), 0.0f);
+//	//	DrawDebugLine(GetWorld(), LineStart, LineEnd, FColor::Black, false, -1, 0, 1);	
+//	//}
+//	
+//
+//	/*DrawDebugPoint(GetWorld(), FVector(static_cast<float>(GEngine->GameViewport->Viewport->GetSizeXY().X) - 125 + 50 * FMath::Cos(Phase), 100 + 50 * FMath::Sin(Phase), 0), 1.0f, FColor::Red, false, 0.03f);
+//	
+//	const auto Pindex1 = static_cast<int>(Phase / (2 * PI) * 50);
+//	Eigen::MatrixXf W0p = PFNN_SkeletalMesh->PFNN->W0[Pindex1];
+//
+//	for(int x = 0; x < W0p.rows(); x++)
+//	{
+//		for(int y = 0; y < W0p.cols(); y++)
+//		{
+//			const float value = (W0p(x, y) + 0.5f) / 2.0f;
+//			const glm::vec3 color = value > 0.5f ? glm::mix(glm::vec3(1, 0, 0), glm::vec3(0, 0, 1), value - 0.5f) : glm::mix(glm::vec3(0, 1, 0), glm::vec3(0, 0, 1), value*2.0f);
+//			DrawDebugPoint(GetWorld(), FVector(static_cast<float>( W0p.cols() + y - 25.0f), x, 0.0f), 2.0f, FColor(color.r, color.g, color.b), false, 0.03f);
+//		}
+//	}*/
+//	
+//		//Drawing of the bone names
+//	for(int i = 0; i < JOINT_NUM; i++)
+//	{
+//		const FName BoneName = PosableMesh->GetBoneName(i);
+//		int index = PosableMesh->GetBoneIndex(BoneName);
+//
+//		auto pos = FVector(JointPosition[i].x, JointPosition[i].y - 100, JointPosition[i].z);
+//		DrawDebugString(GetWorld(), pos, FString(FString::FromInt(index) + BoneName.ToString()), 0, FColor::Green, 0.0001f);
+//	}
+//
+//	for(int i = 0; i < PosableMesh->GetNumBones(); i++)
+//	{
+//		const FName BoneName = PosableMesh->GetBoneName(i);
+//		int index = PosableMesh->GetBoneIndex(BoneName);
+//
+//		auto pos = PosableMesh->GetBoneLocationByName(BoneName, EBoneSpaces::WorldSpace);
+//		//pos.Y += 100;
+//
+//		DrawDebugString(GetWorld(), pos, FString(FString::FromInt(index) + BoneName.ToString()), 0, FColor::White, 0.0001f);
+//	}
+//
+//	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::White, FString::Printf(TEXT("BoneStep = %i"), BoneStep));
+//}
+#endif

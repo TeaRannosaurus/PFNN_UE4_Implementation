@@ -11,6 +11,7 @@
 
 class UPFNN_SkeletalMeshComponent;
 class UPFNNTrajectory;
+struct FSkeletonData;
 
 UCLASS(config=Game)
 class ATP_ThirdPersonCharacter : public ACharacter
@@ -37,21 +38,52 @@ public:
 		JOINT_NUM = 31
 	};
 
-	//Numbers for the bones
+
+	//Bone definitions
 	enum
 	{
+		//Root
+		JOINT_ROOT		= 0,
+
+		//Left leg
 		JOINT_ROOT_L	= 1,
 		JOINT_HIP_L		= 2,
 		JOINT_KNEE_L	= 3,
 		JOINT_HEEL_L	= 4,
 		JOINT_TOE_L		= 5,
 		
+		//Right leg
 		JOINT_ROOT_R	= 6,
 		JOINT_HIP_R		= 7,
 		JOINT_KNEE_R	= 8,
 		JOINT_HEEL_R	= 9,
 		JOINT_TOE_R		= 10,
 
+		//Back to head
+		JOINT_BACK		= 11,
+		JOINT_SPINE_1	= 12,
+		JOINT_SPINE_2	= 13,
+		JOINT_NECK		= 14,
+		JOINT_NECK1		= 15,
+		JOINT_HEAD		= 16,
+
+		//Right arm
+		JOINT_SHOULDER_L= 17,
+		JOINT_ARM_L		= 18,
+		JOINT_FOREARM_L	= 19,
+		JOINT_HAND_L	= 20,
+		JOINT_FINGER_L	= 21,
+		JOINT_INDEX_L	= 22,
+		JOINT_THUMB_L	= 23,
+
+		//Left arm
+		JOINT_SHOULDER_R= 24,
+		JOINT_ARM_R		= 25,
+		JOINT_FOREARM_R	= 26,
+		JOINT_HAND_R	= 27,
+		JOINT_FINGER_R	= 28,
+		JOINT_INDEX_R	= 29,
+		JOINT_THUMB_R	= 30,
 	};
 
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
@@ -109,8 +141,8 @@ public:
 
 	void BeginPlay() override;
 	void Tick(float DeltaSeconds) override;
+	void PoseMesh(FSkeletonData arg_SkeletonData);
 	
-
 	void Load();
 
 
@@ -158,11 +190,23 @@ private:
 	* @Return Resulting calculation
 	*/
 	glm::quat QuaternionExpression(const glm::vec3 arg_Length);
+	/*
+	* @Description Scales the given value between the given min and max
+	* @Param[in] arg_Unscaled
+	* @Param[in] arg_Min
+	* @Param[in] arg_Max
+	* @Return Resulting calculation
+	*/
 	float ScaleBetween(const float arg_Unscaled, const float arg_Min, const float arg_Max);
 
+#if !UE_BUILD_SHIPPING //Debug functions are excluded from the shipping build
+	int BoneStep;
 	void DrawDebugPoints();
 	void DrawDebugTrajectory();
-	void DrawDebugUI();
+	//void DrawDebugUI();
+	void DebugUp();
+	void DebugDown();
+#endif
 
 public:
 	/** Returns CameraBoom subobject **/

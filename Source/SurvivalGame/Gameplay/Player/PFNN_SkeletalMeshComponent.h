@@ -5,9 +5,10 @@
 #include "CoreMinimal.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/PoseableMeshComponent.h"
+#include "Animation/PhaseFunctionNeuralNetwork.h"
 #include "PFNN_SkeletalMeshComponent.generated.h"
 
-class PhaseFunctionNeuralNetwork;
+//class PhaseFunctionNeuralNetwork;
 class UPFNNTrajectory;
 class UPFNN_PosableMesh;
 
