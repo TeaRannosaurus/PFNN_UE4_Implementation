@@ -6,6 +6,15 @@
 #include "Gameplay/Player/BaseCharacter.h"
 #include "TestCharacter.generated.h"
 
+USTRUCT(BlueprintType)
+struct SURVIVALGAME_API FWaypoint
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (MakeEditWidget = "True"))
+	FVector Location;
+};
+
 /**
  * 
  */
@@ -17,12 +26,34 @@ class SURVIVALGAME_API ATestCharacter : public ABaseCharacter
 	virtual void BeginPlay() override;
 
 public:
-	//UPROPERTY()
 
+	ATestCharacter();
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+protected:
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void MoveToWaypoint();
+
+private:
+
+	void MoveBetweenTargets();
+
+	void IncrementCurrentIndex();
+
+	void DebugWaypoints();
+
+private:
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "True"))
+	int CurrentIndex;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "True"))
+	float RequiredDistanceToWaypoint;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "True"))
+	TArray<FWaypoint> Waypoints;
+
 };
