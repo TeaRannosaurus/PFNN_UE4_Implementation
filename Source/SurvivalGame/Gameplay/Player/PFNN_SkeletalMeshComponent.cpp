@@ -8,7 +8,7 @@ UPFNN_SkeletalMeshComponent::UPFNN_SkeletalMeshComponent(): Trajectory(nullptr),
 {
 	///Other load modes for the PFNN
 	//PFNN = new PhaseFunctionNeuralNetwork(PhaseFunctionNeuralNetwork::MODE_CONSTANT);
-	//PFNN = new PhaseFunctionNeuralNetwork(PhaseFunctionNeuralNetwork::MODE_CUBIC);
+	PFNN = new PhaseFunctionNeuralNetwork(PhaseFunctionNeuralNetwork::MODE_CUBIC);
 	//PFNN = new PhaseFunctionNeuralNetwork(PhaseFunctionNeuralNetwork::MODE_LINEAR);
 
 	Trajectory = CreateDefaultSubobject<UPFNNTrajectory>(TEXT("Trajectory"));
@@ -31,7 +31,7 @@ void UPFNN_SkeletalMeshComponent::BeginPlay()
 
 	PFNNPosableMesh->SetSkeletalMeshObject(SkeletalMesh);
 	//PosableMesh->AllocateTransformData();
-	//PFNN->LoadNetworkData();
+	PFNN->LoadNetworkData();
 
 
 	//UE_LOG(NeuralNetworkLoading, Fatal, TEXT("Fatal error, Failed to load Phase Function Neural Network weights. File name "));
