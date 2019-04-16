@@ -19,39 +19,50 @@ public:
 
 	enum { LENGTH = 120 };
 
-	//UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = PFNNTrajectory)
+	//Basic values
 	glm::vec3 TargetDirection;
-	//UPROPERTY(VisibleAnywhere, Category = PFNNTrajectory)
 	glm::vec3 TargetVelocity;
+	UPROPERTY(EditAnywhere, Category = BaseValues)
+	float Width;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = BaseValues)
+	float StrafeAmount;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = BaseValues)
+	float StrafeTarget;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = BaseValues)
+	float Responsive;
 
 	//Extra smoothing values
-	UPROPERTY(EditAnywhere, Category = PFNNTrajectory)
-	float Width;
-	UPROPERTY(EditAnywhere, Category = PFNNTrajectory)
+	UPROPERTY(EditAnywhere, Category = ExtraSmoothing)
 	float ExtraVelocitySmooth;
-	UPROPERTY(EditAnywhere, Category = PFNNTrajectory)
+	UPROPERTY(EditAnywhere, Category = ExtraSmoothing)
 	float ExtraStrafeVelocity;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = ExtraSmoothing)
+	float ExtraDirectionSmooth;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = ExtraSmoothing)
+	float ExtraStrafeSmooth;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = ExtraSmoothing)
+	float ExtraGaitSmooth;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = ExtraSmoothing)
+	float ExtraJointSmooth;
 
-	//Enviorment data
-	//UPROPERTY(VisibleAnywhere, Category = PFNNTrajectory)
+
+	//Positional data
 	glm::vec3 Positions[LENGTH];
-	//UPROPERTY(VisibleAnywhere, Category = PFNNTrajectory)
 	glm::vec3 Directions[LENGTH];
-	//UPROPERTY(VisibleAnywhere, Category = PFNNTrajectory)
 	glm::mat3 Rotations[LENGTH];
-	UPROPERTY(VisibleAnywhere, Category = PFNNTrajectory)
+	UPROPERTY(VisibleAnywhere, Category = PositionalData)
 	float Heights[LENGTH];
 
 	//Gaits
-	UPROPERTY(VisibleAnywhere, Category = PFNNTrajectory)
+	UPROPERTY(VisibleAnywhere, Category = Gaits)
 	float GaitStand[LENGTH];
-	UPROPERTY(VisibleAnywhere, Category = PFNNTrajectory)
+	UPROPERTY(VisibleAnywhere, Category = Gaits)
 	float GaitWalk[LENGTH];
-	UPROPERTY(VisibleAnywhere, Category = PFNNTrajectory)
+	UPROPERTY(VisibleAnywhere, Category = Gaits)
 	float GaitJog[LENGTH];
-	UPROPERTY(VisibleAnywhere, Category = PFNNTrajectory)
+	UPROPERTY(VisibleAnywhere, Category = Gaits)
 	float GaitJump[LENGTH];
-	UPROPERTY(VisibleAnywhere, Category = PFNNTrajectory)
+	UPROPERTY(VisibleAnywhere, Category = Gaits)
 	float GaitBump[LENGTH];
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -59,5 +70,32 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-		
+private:
+	APawn* OwnerPawn;
+
+	glm::vec2 CurrentFrameInput;
+
+	void TickGaits();
+	void PredictFutureTrajectory(const float DeltaSeconds);
+	void TickRotations();
+	void TickHeights();
+
+	/*
+	* @Description Returnes a liniar bled between the X and Y vector direction by using the floating point scalar
+	* @Param[in] X vector
+	* @Param[in] Y vector
+	* @Param[in] Scalar
+	* @Return The result of liniar blending X, Y and the scalar
+	*/
+	static glm::vec3 MixDirections(const glm::vec3 arg_XDirection, const glm::vec3 arg_YDirection, const float arg_Scalar);
+
+#if WITH_EDITORONLY_DATA
+	UPROPERTY(EditAnywhere, Category = Debug)
+	bool bShowDebugInformation;
+#endif
+
+#if !UE_BUILD_SHIPPING //Debug functions are excluded from the shipping build
+	void DrawDebugTrajectory();
+	//void DrawDebugUI();
+#endif
 };
