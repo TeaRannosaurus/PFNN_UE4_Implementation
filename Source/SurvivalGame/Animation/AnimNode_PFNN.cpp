@@ -3,9 +3,12 @@
 #include "AnimNode_PFNN.h"
 #include "PFNN_Trajectory.h"
 #include "AnimInstanceProxy.h"
+#include "DrawDebugHelpers.h"
+#include "Engine.h"
 
 FAnimNode_PFNN::FAnimNode_PFNN(): GaitStand(0), GaitWalk(0), GaitJog(0), GaitJump(0), GaitBump(0), ExtraGaitSmooth(0)
 {
+
 }
 
 void FAnimNode_PFNN::ApplyPFNN(FPoseContext& arg_LocalPoseContext)
@@ -14,7 +17,6 @@ void FAnimNode_PFNN::ApplyPFNN(FPoseContext& arg_LocalPoseContext)
 
 	FCSPose<FCompactPose> GlobalPose;
 	GlobalPose.InitPose(arg_LocalPoseContext.Pose);
-
 
 }
 
@@ -40,21 +42,13 @@ void FAnimNode_PFNN::Update_AnyThread(const FAnimationUpdateContext& Context)
 void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& Output)
 {
 
-
-	for(int32 i = 0; i < JOINT_NUM; i++)
+	for (int32 i = 0; i < JOINT_NUM; i++)
 	{
-		const FCompactPoseBoneIndex index(i);
-
-		UE_LOG(LogTemp, Error, TEXT("Evaluate"));
-
 		const FCompactPoseBoneIndex RootBoneIndex(i);
-		Output.Pose[RootBoneIndex].SetRotation(Output.Pose[RootBoneIndex].GetRotation());
+		Output.Pose[RootBoneIndex].SetRotation(Output.Pose[RootBoneIndex].GetRotation() + FQuat(FQuat::MakeFromEuler(FVector(5.0f))));
 		Output.Pose[RootBoneIndex].NormalizeRotation();
+
 	}
-
-
-
-
 
 	BasePose.Evaluate(Output);
 }
