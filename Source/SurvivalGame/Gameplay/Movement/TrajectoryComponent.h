@@ -79,6 +79,7 @@ private:
 	void PredictFutureTrajectory(const float DeltaSeconds);
 	void TickRotations();
 	void TickHeights();
+	void UpdatePastTrajectory();
 
 	/*
 	* @Description Returnes a liniar bled between the X and Y vector direction by using the floating point scalar

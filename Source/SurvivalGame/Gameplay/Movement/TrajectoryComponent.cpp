@@ -67,6 +67,41 @@ void UTrajectoryComponent::BeginPlay()
 	IsValid(OwnerPawn);
 }
 
+void UTrajectoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	if (glm::abs(CurrentFrameInput.x) + glm::abs(CurrentFrameInput.y) < 0.305f)
+	{
+		CurrentFrameInput = glm::vec2(0);
+	}
+
+	glm::vec3 TrajectoryTargetDirectionNew = glm::normalize(glm::vec3(GetOwner()->GetActorForwardVector().X, GetOwner()->GetActorForwardVector().Y, 0.0f));
+	const glm::mat3 TrajectoryTargetRotation = glm::mat3(glm::rotate(atan2f(
+		TrajectoryTargetDirectionNew.y,
+		TrajectoryTargetDirectionNew.x), glm::vec3(0, 0, 1)));
+	
+	float TargetVelocitySpeed = OwnerPawn->GetVelocity().SizeSquared() / (OwnerPawn->GetMovementComponent()->GetMaxSpeed() * OwnerPawn->GetMovementComponent()->GetMaxSpeed()) * 7.5f; //7.5 is current training walking speed
+	const glm::vec3 TrajectoryTargetVelocityNew = TargetVelocitySpeed * (TrajectoryTargetRotation * glm::vec3(1, 0, 0));
+	TargetVelocity = glm::mix(TargetVelocity, TrajectoryTargetVelocityNew, ExtraVelocitySmooth);
+
+	const glm::vec3 TrajectoryTargetVelocityDirection = glm::length(TargetVelocity) < 1e-05 ? TargetDirection : glm::normalize(TargetVelocity);
+	TrajectoryTargetDirectionNew = MixDirections(TrajectoryTargetVelocityDirection, TrajectoryTargetDirectionNew, StrafeAmount);
+	TargetDirection = MixDirections(TargetDirection, TrajectoryTargetDirectionNew, ExtraDirectionSmooth);
+	//TargetDirection = TrajectoryTargetVelocityDirection;
+
+	TickGaits();
+	PredictFutureTrajectory(DeltaTime);
+	TickRotations();
+	TickHeights();
+
+#if WITH_EDITORONLY_DATA
+	if (bShowDebugInformation)
+		DrawDebugTrajectory();
+#endif
+
+}
+
 void UTrajectoryComponent::TickGaits()
 {
 	//Updating of the gaits
@@ -191,6 +226,21 @@ void UTrajectoryComponent::TickHeights()
 	const glm::mat3 RootRotation = Rotations[LENGTH / 2];
 }
 
+void UTrajectoryComponent::UpdatePastTrajectory()
+{
+	for (int i = 0; i < LENGTH / 2; i++)
+	{
+		Positions[i]	= Positions [i + 1];
+		Directions[i]	= Directions[i + 1];
+		Rotations[i]	= Rotations [i + 1];
+		Heights[i]		= Heights	[i + 1];
+		GaitStand[i]	= GaitStand [i + 1];
+		GaitWalk[i]		= GaitWalk  [i + 1];
+		GaitJog[i]		= GaitJog	[i + 1];
+		GaitBump[i]		= GaitBump	[i + 1];
+	}
+}
+
 glm::vec3 UTrajectoryComponent::MixDirections(const glm::vec3 arg_XDirection, const glm::vec3 arg_YDirection,
 	const float arg_Scalar)
 {
@@ -292,36 +342,3 @@ void UTrajectoryComponent::DrawDebugTrajectory()
 	}
 }
 #endif
-
-void UTrajectoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	if (glm::abs(CurrentFrameInput.x) + glm::abs(CurrentFrameInput.y) < 0.305f)
-	{
-		CurrentFrameInput = glm::vec2(0);
-	}
-
-	const glm::vec3 TrajectoryTargetDirectionNew = glm::normalize(glm::vec3(GetOwner()->GetActorForwardVector().X, GetOwner()->GetActorForwardVector().Y, 0.0f));
-	const glm::mat3 TrajectoryTargetRotation = glm::mat3(glm::rotate(atan2f(
-		TrajectoryTargetDirectionNew.y,
-		TrajectoryTargetDirectionNew.x), glm::vec3(0, 0, 1)));
-	
-	float TargetVelocitySpeed = OwnerPawn->GetVelocity().SizeSquared() / (OwnerPawn->GetMovementComponent()->GetMaxSpeed() * OwnerPawn->GetMovementComponent()->GetMaxSpeed()) * 7.5f; //7.5 is current training walking speed
-	const glm::vec3 TrajectoryTargetVelocityNew = TargetVelocitySpeed * (TrajectoryTargetRotation * glm::vec3(1, 0, 0));
-
-	const glm::vec3 TrajectoryTargetVelocityDirection = glm::length(TargetVelocity) < 1e-05 ? TargetDirection : glm::normalize(TargetVelocity);
-	TargetDirection = MixDirections(TargetDirection, TrajectoryTargetVelocityNew, ExtraDirectionSmooth);
-
-	TickGaits();
-	PredictFutureTrajectory(DeltaTime);
-	TickRotations();
-	TickHeights();
-
-#if WITH_EDITORONLY_DATA
-	if (bShowDebugInformation)
-		DrawDebugTrajectory();
-#endif
-
-}
-
