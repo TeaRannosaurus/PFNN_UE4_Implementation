@@ -76,8 +76,6 @@ void FAnimNode_PFNN::ApplyPFNN(FPoseContext& arg_LocalPoseContext)
 
 	FCSPose<FCompactPose> GlobalPose;
 	GlobalPose.InitPose(arg_LocalPoseContext.Pose);
-
-
 }
 
 void FAnimNode_PFNN::PredictFutureTrajectory(UTrajectoryComponent* arg_Trajectory)
@@ -114,22 +112,16 @@ void FAnimNode_PFNN::Update_AnyThread(const FAnimationUpdateContext& Context)
 
 void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& Output)
 {
-
-
-	for(int32 i = 0; i < JOINT_NUM; i++)
-	{
-		const FCompactPoseBoneIndex index(i);
-
-		UE_LOG(LogTemp, Error, TEXT("Evaluate"));
-
-		const FCompactPoseBoneIndex RootBoneIndex(i);
-		Output.Pose[RootBoneIndex].SetRotation(Output.Pose[RootBoneIndex].GetRotation());
-		Output.Pose[RootBoneIndex].NormalizeRotation();
-	}
-
-
-
-
-
 	BasePose.Evaluate(Output);
+
+	const FTransform& CharacterTransform = Output.AnimInstanceProxy->GetActorTransform();
+
+	for (int32 i = 0; i < Output.Pose.GetNumBones(); i++)
+	{
+		const FCompactPoseBoneIndex RootBoneIndex(i);
+		Output.Pose[RootBoneIndex].SetRotation(Output.Pose[RootBoneIndex].GetRotation() + FQuat(FQuat::MakeFromEuler(FVector(i * 3.0f, 0.0f, 0.0f))));
+
+		Output.AnimInstanceProxy->AnimDrawDebugSphere(Output.Pose[RootBoneIndex].GetLocation() + CharacterTransform.GetLocation(), 2.5f, 12, FColor::Green, false, -1.0f);
+	}
+	Output.Pose.NormalizeRotations();
 }
