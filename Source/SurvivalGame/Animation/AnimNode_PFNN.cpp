@@ -135,38 +135,6 @@ void FAnimNode_PFNN::ApplyPFNN(FPoseContext& arg_LocalPoseContext)
 	}
 }
 
-void FAnimNode_PFNN::PredictFutureTrajectory(UTrajectoryComponent* arg_Trajectory)
-{
-	//Predicting future trajectory
-	//TO VALIDATE: Calculations might be incorrect
-	glm::vec3 TrajectoryPositionsBlend[UTrajectoryComponent::LENGTH];
-	TrajectoryPositionsBlend[UTrajectoryComponent::LENGTH / 2] = Trajectory->Positions[UTrajectoryComponent::LENGTH / 2];
-	for (int i = UTrajectoryComponent::LENGTH / 2 + 1; i < UTrajectoryComponent::LENGTH; i++)
-	{
-		const float BiasPosition = Trajectory->Responsive ? glm::mix(2.0f, 2.0f, Trajectory->StrafeAmount) : glm::mix(0.5f, 1.0f, Trajectory->StrafeAmount);
-		const float BiasDirection = Trajectory->Responsive ? glm::mix(5.0f, 3.0f, Trajectory->StrafeAmount) : glm::mix(2.0f, 0.5f, Trajectory->StrafeAmount);
-
-		const float ScalePosition = (1.0f - powf(1.0f - (static_cast<float>(i - UTrajectoryComponent::LENGTH / 2) / (UTrajectoryComponent::LENGTH / 2)), BiasPosition));
-		const float ScaleDirection = (1.0f - powf(1.0f - (static_cast<float>(i - UTrajectoryComponent::LENGTH / 2) / (UTrajectoryComponent::LENGTH / 2)), BiasDirection));
-
-		//TrajectoryPositionsBlend[i] = glm::mix(Trajectory->Positions[i] - Trajectory->Positions[i - 1], Trajectory->TargetVelocity * DeltaSeconds, ScalePosition);
-		TrajectoryPositionsBlend[i] = glm::mix(Trajectory->Positions[i] - Trajectory->Positions[i - 1], Trajectory->TargetVelocity, ScalePosition); //Delta seconds missing
-
-		//TODO: Add wall colision for future trajectory - 1519
-
-		Trajectory->Directions[i] = glm::mix(Trajectory->Directions[i], Trajectory->TargetDirection, ScaleDirection);
-
-		//Trajectory->Heights[i]	= Trajectory->Heights[UTrajectoryComponent::LENGTH / 2];
-		Trajectory->Heights[i] = 0; //Debug can be removed
-
-		Trajectory->GaitStand[i] = Trajectory->GaitStand[UTrajectoryComponent::LENGTH / 2];
-		Trajectory->GaitWalk[i] = Trajectory->GaitWalk[UTrajectoryComponent::LENGTH / 2];
-		Trajectory->GaitJog[i] = Trajectory->GaitJog[UTrajectoryComponent::LENGTH / 2];
-		Trajectory->GaitJump[i] = Trajectory->GaitJump[UTrajectoryComponent::LENGTH / 2];
-		Trajectory->GaitBump[i] = Trajectory->GaitBump[UTrajectoryComponent::LENGTH / 2];
-	}
-}
-
 void FAnimNode_PFNN::Initialize_AnyThread(const FAnimationInitializeContext& Context)
 {
 	if(Trajectory == nullptr)

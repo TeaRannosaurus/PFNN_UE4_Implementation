@@ -72,8 +72,6 @@ struct SURVIVALGAME_API FAnimNode_PFNN : public FAnimNode_Base
 
 	void ApplyPFNN(FPoseContext& arg_LocalPoseContext);
 
-	void PredictFutureTrajectory(UTrajectoryComponent* arg_Trajectory);
-
 	// FAnimNode_Base interface
 	/**
 	 * Default AnimNode function to initialize bones
