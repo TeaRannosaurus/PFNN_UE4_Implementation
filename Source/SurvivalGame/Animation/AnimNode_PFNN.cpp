@@ -7,8 +7,6 @@
 #include "MachineLearning/PhaseFunctionNeuralNetwork.h"
 #include <ThirdParty/glm/gtx/transform.inl>
 #include "PlatformFilemanager.h"
-#include "DrawDebugHelpers.h"
-#include "Engine.h"
 
 UPhaseFunctionNeuralNetwork* FAnimNode_PFNN::PFNN = nullptr;
 
@@ -64,6 +62,12 @@ void FAnimNode_PFNN::LoadXForms()
 
 void FAnimNode_PFNN::LoadPFNN() const
 {
+	if(PFNN == nullptr || PFNN->mode != PFNNMode)
+	{
+		PFNN = NewObject<UPhaseFunctionNeuralNetwork>();
+		PFNN->mode = PFNNMode;
+		PFNN->LoadNetworkData();
+	}
 }
 
 void FAnimNode_PFNN::ApplyPFNN(FPoseContext& arg_LocalPoseContext)
@@ -72,6 +76,7 @@ void FAnimNode_PFNN::ApplyPFNN(FPoseContext& arg_LocalPoseContext)
 
 	FCSPose<FCompactPose> GlobalPose;
 	GlobalPose.InitPose(arg_LocalPoseContext.Pose);
+
 
 }
 
@@ -110,13 +115,21 @@ void FAnimNode_PFNN::Update_AnyThread(const FAnimationUpdateContext& Context)
 void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& Output)
 {
 
-	for (int32 i = 0; i < JOINT_NUM; i++)
-	{
-		const FCompactPoseBoneIndex RootBoneIndex(i);
-		Output.Pose[RootBoneIndex].SetRotation(Output.Pose[RootBoneIndex].GetRotation() + FQuat(FQuat::MakeFromEuler(FVector(5.0f))));
-		Output.Pose[RootBoneIndex].NormalizeRotation();
 
+	for(int32 i = 0; i < JOINT_NUM; i++)
+	{
+		const FCompactPoseBoneIndex index(i);
+
+		UE_LOG(LogTemp, Error, TEXT("Evaluate"));
+
+		const FCompactPoseBoneIndex RootBoneIndex(i);
+		Output.Pose[RootBoneIndex].SetRotation(Output.Pose[RootBoneIndex].GetRotation());
+		Output.Pose[RootBoneIndex].NormalizeRotation();
 	}
+
+
+
+
 
 	BasePose.Evaluate(Output);
 }
