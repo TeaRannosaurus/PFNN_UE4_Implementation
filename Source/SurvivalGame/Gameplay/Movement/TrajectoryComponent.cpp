@@ -211,19 +211,6 @@ void UTrajectoryComponent::TickHeights()
 	{
 		Heights[LENGTH / 2] += Positions[i].z / (LENGTH / TrajectoryPointStepSize);
 	}
-
-	const glm::vec3 RootPosition = glm::vec3(
-		Positions[LENGTH / 2].x + GetOwner()->GetActorLocation().X,
-		Positions[LENGTH / 2].y + GetOwner()->GetActorLocation().Y,
-		/*Trajectory->Heights[LENGTH / Half]*/0.0f);
-
-	//const glm::vec3 RootPosition = glm::vec3(
-	//	 GetActorLocation().X,
-	//	 GetActorLocation().Y,
-	//	/*Trajectory->Heights[LENGTH / Half]*/0.0f);
-
-
-	const glm::mat3 RootRotation = Rotations[LENGTH / 2];
 }
 
 void UTrajectoryComponent::UpdatePastTrajectory()

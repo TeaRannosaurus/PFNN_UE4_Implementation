@@ -9,7 +9,6 @@
 #include <ThirdParty/glm/mat4x4.hpp>
 #include "AnimNode_PFNN.generated.h"
 
-class UPFNN_Trajectory;
 class UTrajectoryComponent;
 class UPhaseFunctionNeuralNetwork;
 
@@ -35,7 +34,7 @@ struct SURVIVALGAME_API FAnimNode_PFNN : public FAnimNode_Base
 
 	/* Trajectory pin */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Trajectory, meta = (PinShownByDefault))
-	UPFNN_Trajectory* Trajectory = nullptr;
+	UTrajectoryComponent* Trajectory = nullptr;
 
 	/* Gait pins */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gaits, meta = (PinShownByDefault))
