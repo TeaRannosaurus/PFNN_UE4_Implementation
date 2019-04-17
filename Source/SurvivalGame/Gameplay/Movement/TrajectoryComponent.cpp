@@ -63,7 +63,7 @@ void UTrajectoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	OwnerPawn = Cast<APawn*>(GetOwner());
+	OwnerPawn = Cast<APawn>(GetOwner());
 	IsValid(OwnerPawn);
 }
 
