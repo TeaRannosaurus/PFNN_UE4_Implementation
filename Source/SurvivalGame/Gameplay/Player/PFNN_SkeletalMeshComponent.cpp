@@ -7,9 +7,9 @@
 UPFNN_SkeletalMeshComponent::UPFNN_SkeletalMeshComponent(): Trajectory(nullptr), PFNN(nullptr)
 {
 	///Other load modes for the PFNN
-	//PFNN = new PhaseFunctionNeuralNetwork(PhaseFunctionNeuralNetwork::MODE_CONSTANT);
-	PFNN = new PhaseFunctionNeuralNetwork(PhaseFunctionNeuralNetwork::MODE_CUBIC);
-	//PFNN = new PhaseFunctionNeuralNetwork(PhaseFunctionNeuralNetwork::MODE_LINEAR);
+	//PFNN = new DEPRICATED_PhaseFunctionNeuralNetwork(DEPRICATED_PhaseFunctionNeuralNetwork::MODE_CONSTANT);
+	PFNN = new DEPRICATED_PhaseFunctionNeuralNetwork(DEPRICATED_PhaseFunctionNeuralNetwork::MODE_CUBIC);
+	//PFNN = new DEPRICATED_PhaseFunctionNeuralNetwork(DEPRICATED_PhaseFunctionNeuralNetwork::MODE_LINEAR);
 
 	Trajectory = CreateDefaultSubobject<UPFNNTrajectory>(TEXT("Trajectory"));
 	//PosableMesh = CreateDefaultSubobject<UPoseableMeshComponent>(TEXT("PosableMeshComponent"));

@@ -10,7 +10,7 @@
 #include "Gameplay/Player/PFNN_SkeletalMeshComponent.h"
 #include "Gameplay/Player/PFNN_PosableMesh.h"
 #include "PlatformFilemanager.h"
-//#include "Gameplay/Movement/AnimationController/PhaseFunctionNeuralNetwork.h"
+//#include "Gameplay/Movement/AnimationController/DEPRICATED_PhaseFunctionNeuralNetwork.h"
 #include "Gameplay/Movement/PFNNTrajectory.h"
 #include "Engine/Engine.h"
 #include "Components/PoseableMeshComponent.h"
@@ -138,7 +138,7 @@ void ATP_ThirdPersonCharacter::Tick(float DeltaSeconds)
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Orange, FString::Printf(TEXT("Detla seconds = %f"), DeltaSeconds));
 	DrawDebugPoints();
 #endif
-
+	return;
 	if (Trajectory == nullptr)
 	{
 		//UE_LOG(TrajectoryFatal, Fatal, TEXT("Fatal error: No trajectory found."));
@@ -555,8 +555,8 @@ void ATP_ThirdPersonCharacter::Load()
 	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 
 	const FString RelativePath = FPaths::ProjectDir();
-	const FString FullPathParents = RelativePath + FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/character_parents.bin"));
-	const FString FullPathXforms = RelativePath + FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/character_xforms.bin"));
+	const FString FullPathParents = RelativePath + FString::Printf(TEXT("Content/MachineLearning/DEPRICATED_PhaseFunctionNeuralNetwork/character_parents.bin"));
+	const FString FullPathXforms = RelativePath + FString::Printf(TEXT("Content/MachineLearning/DEPRICATED_PhaseFunctionNeuralNetwork/character_xforms.bin"));
 
 	IFileHandle* FileHandle = PlatformFile.OpenRead(*FullPathParents);
 	if (FileHandle == nullptr)

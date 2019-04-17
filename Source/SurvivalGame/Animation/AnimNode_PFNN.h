@@ -5,9 +5,13 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimNodeBase.h"
+#include <ThirdParty/glm/vec3.hpp>
+#include <ThirdParty/glm/mat4x4.hpp>
 #include "AnimNode_PFNN.generated.h"
 
 class UPFNN_Trajectory;
+class UTrajectoryComponent;
+class UPhaseFunctionNeuralNetwork;
 
 /**
  * 
@@ -47,7 +51,29 @@ struct SURVIVALGAME_API FAnimNode_PFNN : public FAnimNode_Base
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gaits, meta = (PinShownByDefault))
 	float ExtraGaitSmooth;
 
+	glm::vec3 JointPosition[JOINT_NUM];
+	glm::vec3 JointVelocitys[JOINT_NUM];
+	glm::mat4 JointRotations[JOINT_NUM];
+
+	glm::mat4 JointAnimXform[JOINT_NUM];
+	glm::mat4 JointRestXform[JOINT_NUM];
+	glm::mat4 JointMeshXform[JOINT_NUM];
+	glm::mat4 JointGlobalRestXform[JOINT_NUM];
+	glm::mat4 JointGlobalAnimXform[JOINT_NUM];
+	int JointParents[JOINT_NUM];
+
+	UPROPERTY(EditAnywhere, Category = PFNN, meta = (ClampMin = 0, ClampMax = 2, UIMin = 0, UIMax = 2))
+	int PFNNMode;
+	static UPhaseFunctionNeuralNetwork* PFNN;
+
+	void LoadData();
+	void LoadXForms();
+	void LoadPFNN() const;
+
+
 	void ApplyPFNN(FPoseContext& arg_LocalPoseContext);
+
+	void PredictFutureTrajectory(UTrajectoryComponent* arg_Trajectory);
 
 	// FAnimNode_Base interface
 	/**
