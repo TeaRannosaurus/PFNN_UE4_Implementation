@@ -20,8 +20,4 @@ public:
 
 	virtual void NativeUpdateAnimation(float arg_DeltaTimeX) override;
 
-private:
-
-	USkeletalMeshComponent* SkeletalMesh;
-
 };
