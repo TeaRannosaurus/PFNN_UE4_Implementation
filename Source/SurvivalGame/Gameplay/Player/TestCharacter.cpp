@@ -3,11 +3,14 @@
 #include "TestCharacter.h"
 
 #include "DrawDebugHelpers.h"
+#include "Gameplay/Movement/TrajectoryComponent.h"
 
-ATestCharacter::ATestCharacter() 
+ATestCharacter::ATestCharacter(): TrajectoryComponent(nullptr)
 {
 	CurrentIndex = 0;
 	RequiredDistanceToWaypoint = 100.f;
+
+	TrajectoryComponent = CreateDefaultSubobject<UTrajectoryComponent>(TEXT("TrajectoryComponent"));
 }
 
 void ATestCharacter::BeginPlay()

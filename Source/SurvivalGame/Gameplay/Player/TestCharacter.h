@@ -6,6 +6,8 @@
 #include "Gameplay/Player/BaseCharacter.h"
 #include "TestCharacter.generated.h"
 
+class UTrajectoryComponent;
+
 USTRUCT(BlueprintType)
 struct SURVIVALGAME_API FWaypoint
 {
@@ -55,5 +57,9 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "True"))
 	TArray<FWaypoint> Waypoints;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "True"))
+	UTrajectoryComponent* TrajectoryComponent;
+
 
 };
