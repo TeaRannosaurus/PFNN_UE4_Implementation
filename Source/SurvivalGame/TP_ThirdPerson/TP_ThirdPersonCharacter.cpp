@@ -138,7 +138,6 @@ void ATP_ThirdPersonCharacter::Tick(float DeltaSeconds)
 	GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::Orange, FString::Printf(TEXT("Detla seconds = %f"), DeltaSeconds));
 	DrawDebugPoints();
 #endif
-	return;
 	if (Trajectory == nullptr)
 	{
 		//UE_LOG(TrajectoryFatal, Fatal, TEXT("Fatal error: No trajectory found."));
