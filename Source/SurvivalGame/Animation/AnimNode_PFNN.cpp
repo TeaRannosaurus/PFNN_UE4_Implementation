@@ -119,7 +119,9 @@ void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& Output)
 	for (int32 i = 0; i < Output.Pose.GetNumBones(); i++)
 	{
 		const FCompactPoseBoneIndex RootBoneIndex(i);
-		Output.Pose[RootBoneIndex].SetRotation(Output.Pose[RootBoneIndex].GetRotation() + FQuat(FQuat::MakeFromEuler(FVector(i * 3.0f, 0.0f, 0.0f))));
+
+		Output.Pose[RootBoneIndex].SetLocation(Output.Pose[RootBoneIndex].GetLocation());
+		Output.Pose[RootBoneIndex].SetRotation(Output.Pose[RootBoneIndex].GetRotation());
 
 		Output.AnimInstanceProxy->AnimDrawDebugSphere(Output.Pose[RootBoneIndex].GetLocation() + CharacterTransform.GetLocation(), 2.5f, 12, FColor::Green, false, -1.0f);
 	}
