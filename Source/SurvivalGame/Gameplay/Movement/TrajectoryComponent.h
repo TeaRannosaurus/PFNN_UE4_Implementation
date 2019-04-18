@@ -8,7 +8,7 @@
 #include "TrajectoryComponent.generated.h"
 
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS(BlueprintType)
 class SURVIVALGAME_API UTrajectoryComponent : public UActorComponent
 {
 	GENERATED_BODY()

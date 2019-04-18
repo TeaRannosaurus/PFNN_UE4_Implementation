@@ -11,7 +11,7 @@
 UPhaseFunctionNeuralNetwork* FAnimNode_PFNN::PFNN = nullptr;
 
 FAnimNode_PFNN::FAnimNode_PFNN(): GaitStand(0), GaitWalk(0), GaitJog(0), GaitJump(0), GaitBump(0), ExtraGaitSmooth(0),
-                                  PFNNMode(2)
+                                  PFNNMode(2), Phase(0)
 {
 }
 
@@ -70,13 +70,8 @@ void FAnimNode_PFNN::LoadPFNN() const
 	}
 }
 
-void FAnimNode_PFNN::ApplyPFNN(FPoseContext& arg_LocalPoseContext)
+void FAnimNode_PFNN::ApplyPFNN()
 {
-	const FBoneContainer& RequiredBones = arg_LocalPoseContext.Pose.GetBoneContainer();
-
-	FCSPose<FCompactPose> GlobalPose;
-	GlobalPose.InitPose(arg_LocalPoseContext.Pose);
-
 	const glm::vec3 RootPosition = glm::vec3(
 		Trajectory->Positions[UTrajectoryComponent::LENGTH / 2].x + Trajectory->GetOwner()->GetActorLocation().X,
 		Trajectory->Positions[UTrajectoryComponent::LENGTH / 2].y + Trajectory->GetOwner()->GetActorLocation().Y,
@@ -133,12 +128,49 @@ void FAnimNode_PFNN::ApplyPFNN(FPoseContext& arg_LocalPoseContext)
 		PFNN->Xp(o + (JOINT_NUM * 3 * 1) + i * 3 + 1) = Previous.z;
 		PFNN->Xp(o + (JOINT_NUM * 3 * 1) + i * 3 + 2) = Previous.y;
 	}
+
+	//Input heights for the trajectory
+	for (int i = 0; i < UTrajectoryComponent::LENGTH; i += 10)
+	{
+		const int o = (((UTrajectoryComponent::LENGTH) / 10)*10) + JOINT_NUM * 3 * 2;
+		const int w = UTrajectoryComponent::LENGTH / 10;
+
+		const glm::vec3 PositionRight	= Trajectory->Positions[i] + (Trajectory->Rotations[i] * glm::vec3(Trajectory->Width, 0, 0));
+		const glm::vec3 PositionLeft	= Trajectory->Positions[i] + (Trajectory->Rotations[i] * glm::vec3(-Trajectory->Width, 0, 0));
+
+		FCollisionQueryParams TraceParams = FCollisionQueryParams(FName(TEXT("GroundGeometryTrace")), true, Trajectory->GetOwner());
+		TraceParams.bTraceComplex = true;
+		TraceParams.bTraceAsyncScene = true;
+		TraceParams.bReturnPhysicalMaterial = false;
+
+		const float DistanceLenght = 10000;
+		FHitResult HitResultLeft(ForceInit);
+		FHitResult HitResultRight(ForceInit);
+
+		const FVector UPositionRight = FVector(PositionRight.x, PositionRight.y, PositionRight.z);
+		const FVector UPositionLeft = FVector(PositionLeft.x, PositionLeft.y, PositionLeft.z);
+
+		Trajectory->GetOwner()->GetWorld()->LineTraceSingleByChannel(HitResultRight, UPositionLeft, -FVector::UpVector * DistanceLenght, ECC_Pawn, TraceParams);
+		Trajectory->GetOwner()->GetWorld()->LineTraceSingleByChannel(HitResultLeft, UPositionRight, -FVector::UpVector * DistanceLenght, ECC_Pawn, TraceParams);
+
+		//TODO: Add height addition
+		PFNN->Xp(o + (w * 0) + i / 10) = /*HitResultRight.Location.Z*/ 0 - RootPosition.z;
+		PFNN->Xp(o + (w * 1) + i / 10) = Trajectory->Positions[i].z; /*- RootPosition.z*/
+		PFNN->Xp(o + (w * 2) + i / 10) = /*HitResultLeft.Location.Z-*/ 0 - RootPosition.z;
+	}
+
+	//Preform regression
+	PFNN->Predict(Phase);
+
+	const float StandAmount = powf(1.0f - Trajectory->GaitStand[UTrajectoryComponent::LENGTH / 2], 0.25f);
+	Phase = fmod(Phase + (StandAmount * 0.9f + 0.1f) * 2.0f * PI * PFNN->Yp(3), 2.0f * PI);
 }
 
 void FAnimNode_PFNN::Initialize_AnyThread(const FAnimationInitializeContext& Context)
 {
-	if(Trajectory == nullptr)
-		UE_LOG(LogTemp, Error, TEXT("Trajectory is not set in a PFNN animation node."));
+	//if(Trajectory == nullptr)
+
+		//UE_LOG(LogTemp, Error, TEXT("Trajectory is not set in a PFNN animation node."));
 	
 
 	BasePose.Initialize(Context);
@@ -151,6 +183,9 @@ void FAnimNode_PFNN::Update_AnyThread(const FAnimationUpdateContext& Context)
 	//UE_LOG(LogTemp, Warning, TEXT("Update PFNN node"));
 	FAnimInstanceProxy* AnimProxy = Context.AnimInstanceProxy;
 	FTransform transform = AnimProxy->GetSkelMeshCompOwnerTransform();
+
+	if(Trajectory != nullptr)
+		ApplyPFNN();
 
 	BasePose.Update(Context);
 }

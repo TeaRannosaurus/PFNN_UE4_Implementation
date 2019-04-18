@@ -33,7 +33,7 @@ struct SURVIVALGAME_API FAnimNode_PFNN : public FAnimNode_Base
 	FPoseLink BasePose;
 
 	/* Trajectory pin */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Trajectory, meta = (PinShownByDefault))
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Trajectory, meta = (PinShownByDefault))
 	UTrajectoryComponent* Trajectory = nullptr;
 
 	/* Gait pins */
@@ -63,6 +63,8 @@ struct SURVIVALGAME_API FAnimNode_PFNN : public FAnimNode_Base
 
 	UPROPERTY(EditAnywhere, Category = PFNN, meta = (ClampMin = 0, ClampMax = 2, UIMin = 0, UIMax = 2))
 	int PFNNMode;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = PFNN)
+	float Phase;
 	static UPhaseFunctionNeuralNetwork* PFNN;
 
 	void LoadData();
@@ -70,7 +72,7 @@ struct SURVIVALGAME_API FAnimNode_PFNN : public FAnimNode_Base
 	void LoadPFNN() const;
 
 
-	void ApplyPFNN(FPoseContext& arg_LocalPoseContext);
+	void ApplyPFNN();
 
 	// FAnimNode_Base interface
 	/**
