@@ -6,8 +6,6 @@
 #include "Gameplay/Player/BaseCharacter.h"
 #include "TestCharacter.generated.h"
 
-class UTrajectoryComponent;
-
 USTRUCT(BlueprintType)
 struct SURVIVALGAME_API FWaypoint
 {
@@ -34,6 +32,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	class UTrajectoryComponent* GetTrajectoryComponent();
+
 protected:
 
 	UFUNCTION(BlueprintImplementableEvent)
@@ -59,7 +59,7 @@ private:
 	TArray<FWaypoint> Waypoints;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "True"))
-	UTrajectoryComponent* TrajectoryComponent;
+	class UTrajectoryComponent* TrajectoryComponent;
 
 
 };

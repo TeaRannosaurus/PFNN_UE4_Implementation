@@ -35,6 +35,11 @@ void ATestCharacter::Tick(float DeltaTime)
 	DebugWaypoints();
 }
 
+UTrajectoryComponent* ATestCharacter::GetTrajectoryComponent() 
+{
+	return TrajectoryComponent;
+}
+
 void ATestCharacter::MoveBetweenTargets() 
 {
 	if (CurrentIndex != -1) 
