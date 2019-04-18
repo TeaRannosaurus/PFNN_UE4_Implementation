@@ -6,7 +6,7 @@
 #include "Runtime/Core/Public/Misc/Paths.h"
 #include "PlatformFilemanager.h"
 
-UPhaseFunctionNeuralNetwork::UPhaseFunctionNeuralNetwork()
+UPhaseFunctionNeuralNetwork::UPhaseFunctionNeuralNetwork(): mode(0)
 {
 }
 
