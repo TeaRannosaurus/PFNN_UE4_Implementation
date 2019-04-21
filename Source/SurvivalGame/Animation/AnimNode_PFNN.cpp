@@ -168,6 +168,7 @@ void FAnimNode_PFNN::ApplyPFNN()
 
 void FAnimNode_PFNN::Initialize_AnyThread(const FAnimationInitializeContext& Context)
 {
+	FAnimNode_Base::Initialize_AnyThread(Context);
 	//if(Trajectory == nullptr)
 
 		//UE_LOG(LogTemp, Error, TEXT("Trajectory is not set in a PFNN animation node."));
