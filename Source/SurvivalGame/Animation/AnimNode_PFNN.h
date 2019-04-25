@@ -22,57 +22,14 @@ struct SURVIVALGAME_API FAnimNode_PFNN : public FAnimNode_Base
 
 	FAnimNode_PFNN();
 
-	//Amount of joints
-	enum
-	{
-		JOINT_NUM = 31
-	};
-
-	/** Base Pose*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Links)
-	FPoseLink BasePose;
-
-	/* Trajectory pin */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Trajectory, meta = (PinShownByDefault))
-	UTrajectoryComponent* Trajectory = nullptr;
-
-	/* Gait pins */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gaits, meta = (PinShownByDefault))
-	float GaitStand;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gaits, meta = (PinShownByDefault))
-	float GaitWalk;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gaits, meta = (PinShownByDefault))
-	float GaitJog;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gaits, meta = (PinShownByDefault))
-	float GaitJump;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gaits, meta = (PinShownByDefault))
-	float GaitBump;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gaits, meta = (PinShownByDefault))
-	float ExtraGaitSmooth;
-
-	glm::vec3 JointPosition[JOINT_NUM];
-	glm::vec3 JointVelocitys[JOINT_NUM];
-	glm::mat4 JointRotations[JOINT_NUM];
-
-	glm::mat4 JointAnimXform[JOINT_NUM];
-	glm::mat4 JointRestXform[JOINT_NUM];
-	glm::mat4 JointMeshXform[JOINT_NUM];
-	glm::mat4 JointGlobalRestXform[JOINT_NUM];
-	glm::mat4 JointGlobalAnimXform[JOINT_NUM];
-	int JointParents[JOINT_NUM];
-
-	UPROPERTY(EditAnywhere, Category = PFNN, meta = (ClampMin = 0, ClampMax = 2, UIMin = 0, UIMax = 2))
-	int PFNNMode;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = PFNN)
-	float Phase;
-	static UPhaseFunctionNeuralNetwork* PFNN;
-
 	void LoadData();
 	void LoadXForms();
 	void LoadPFNN() const;
 
-
 	void ApplyPFNN();
+
+	class UPFNNAnimInstance* GetPFNNInstanceFromContext(const FAnimationInitializeContext& Context);
+	class UPFNNAnimInstance* GetPFNNInstanceFromContext(const FAnimationUpdateContext& Context);
 
 	// FAnimNode_Base interface
 	/**
@@ -96,4 +53,36 @@ struct SURVIVALGAME_API FAnimNode_PFNN : public FAnimNode_Base
 	*/
 	virtual void Evaluate_AnyThread(FPoseContext& Output) 							override;
 	// End of FAnimNode_Base interface
+
+	//Amount of joints
+	enum
+	{
+		JOINT_NUM = 31
+	};
+
+	/** Base Pose*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Links)
+	FPoseLink BasePose;
+
+	class UPFNNAnimInstance* PFNNAnimInstance;
+
+	UTrajectoryComponent* Trajectory = nullptr;
+
+	glm::vec3 JointPosition[JOINT_NUM];
+	glm::vec3 JointVelocitys[JOINT_NUM];
+	glm::mat4 JointRotations[JOINT_NUM];
+
+	glm::mat4 JointAnimXform[JOINT_NUM];
+	glm::mat4 JointRestXform[JOINT_NUM];
+	glm::mat4 JointMeshXform[JOINT_NUM];
+	glm::mat4 JointGlobalRestXform[JOINT_NUM];
+	glm::mat4 JointGlobalAnimXform[JOINT_NUM];
+	int JointParents[JOINT_NUM];
+
+	UPROPERTY(EditAnywhere, Category = PFNN, meta = (ClampMin = 0, ClampMax = 2, UIMin = 0, UIMax = 2))
+	int PFNNMode;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = PFNN)
+	float Phase;
+	static UPhaseFunctionNeuralNetwork* PFNN;
+
 };

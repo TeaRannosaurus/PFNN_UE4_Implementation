@@ -27,3 +27,8 @@ void UPFNNAnimInstance::NativeUpdateAnimation(float arg_DeltaTimeX)
 		OwningTrajectoryComponent = OwningCharacter->GetTrajectoryComponent();
 	}
 }
+
+UTrajectoryComponent * UPFNNAnimInstance::GetOwningTrajectoryComponent()
+{
+	return OwningTrajectoryComponent;
+}

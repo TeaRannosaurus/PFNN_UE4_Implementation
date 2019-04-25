@@ -1,17 +1,19 @@
 // Copyright 2018 Sticks & Stones. All Rights Reserved.
 
 #include "AnimNode_PFNN.h"
+#include "PFNNAnimInstance.h"
 #include "PFNN_Trajectory.h"
-#include "AnimInstanceProxy.h"
 #include "Gameplay/Movement/TrajectoryComponent.h"
+
+#include "AnimInstanceProxy.h"
 #include "MachineLearning/PhaseFunctionNeuralNetwork.h"
-#include <ThirdParty/glm/gtx/transform.inl>
 #include "PlatformFilemanager.h"
+
+#include <ThirdParty/glm/gtx/transform.inl>
 
 UPhaseFunctionNeuralNetwork* FAnimNode_PFNN::PFNN = nullptr;
 
-FAnimNode_PFNN::FAnimNode_PFNN(): GaitStand(0), GaitWalk(0), GaitJog(0), GaitJump(0), GaitBump(0), ExtraGaitSmooth(0),
-                                  PFNNMode(2), Phase(0)
+FAnimNode_PFNN::FAnimNode_PFNN(): Trajectory(nullptr), PFNNAnimInstance(nullptr), PFNNMode(2)
 {
 }
 
@@ -166,24 +168,49 @@ void FAnimNode_PFNN::ApplyPFNN()
 	Phase = fmod(Phase + (StandAmount * 0.9f + 0.1f) * 2.0f * PI * PFNN->Yp(3), 2.0f * PI);
 }
 
+UPFNNAnimInstance * FAnimNode_PFNN::GetPFNNInstanceFromContext(const FAnimationInitializeContext& Context)
+{
+	FAnimInstanceProxy* AnimProxy = Context.AnimInstanceProxy;
+	if (AnimProxy)
+	{
+		return Cast<UPFNNAnimInstance>(AnimProxy->GetAnimInstanceObject());
+	}
+	return nullptr;
+}
+
+UPFNNAnimInstance * FAnimNode_PFNN::GetPFNNInstanceFromContext(const FAnimationUpdateContext & Context)
+{
+	FAnimInstanceProxy* AnimProxy = Context.AnimInstanceProxy;
+	if (AnimProxy)
+	{
+		return Cast<UPFNNAnimInstance>(AnimProxy->GetAnimInstanceObject());
+	}
+	return nullptr;
+}
+
 void FAnimNode_PFNN::Initialize_AnyThread(const FAnimationInitializeContext& Context)
 {
 	FAnimNode_Base::Initialize_AnyThread(Context);
-	//if(Trajectory == nullptr)
-
-		//UE_LOG(LogTemp, Error, TEXT("Trajectory is not set in a PFNN animation node."));
 	
+	PFNNAnimInstance = GetPFNNInstanceFromContext(Context);
+	if (!PFNNAnimInstance) 
+	{
+		UE_LOG(LogTemp, Error, TEXT("PFNN Animation node should only be added to a PFNNAnimInstance child class!"));
+	}
 
 	BasePose.Initialize(Context);
 	LoadData();
-	//UE_LOG(LogTemp, Warning, TEXT("Initalize PFNN node"));
 }
 
 void FAnimNode_PFNN::Update_AnyThread(const FAnimationUpdateContext& Context)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("Update PFNN node"));
-	FAnimInstanceProxy* AnimProxy = Context.AnimInstanceProxy;
-	FTransform transform = AnimProxy->GetSkelMeshCompOwnerTransform();
+	FAnimNode_Base::Update_AnyThread(Context);
+
+	if (PFNNAnimInstance) 
+	{
+		Trajectory = PFNNAnimInstance->GetOwningTrajectoryComponent();
+	}
+	
 
 	if(Trajectory != nullptr)
 		ApplyPFNN();

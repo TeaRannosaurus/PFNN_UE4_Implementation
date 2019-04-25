@@ -20,6 +20,8 @@ public:
 
 	virtual void NativeUpdateAnimation(float arg_DeltaTimeX) override;
 
+	class UTrajectoryComponent* GetOwningTrajectoryComponent();
+
 private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "True"))
