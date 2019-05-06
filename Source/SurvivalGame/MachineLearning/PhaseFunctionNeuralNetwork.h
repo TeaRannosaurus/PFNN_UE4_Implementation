@@ -7,6 +7,8 @@
 #include "ThirdParty/Eigen/Dense"
 #include "PhaseFunctionNeuralNetwork.generated.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(PFNN_Logging, Log, All);
+
 /**
  * 
  */
@@ -16,7 +18,6 @@ class SURVIVALGAME_API UPhaseFunctionNeuralNetwork : public UObject
 public:
 	GENERATED_BODY()
 	UPhaseFunctionNeuralNetwork();
-	UPhaseFunctionNeuralNetwork(int mode);
 	~UPhaseFunctionNeuralNetwork();
 	
 	int mode;

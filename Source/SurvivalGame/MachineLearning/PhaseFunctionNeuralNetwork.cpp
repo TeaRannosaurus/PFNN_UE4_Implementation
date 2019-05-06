@@ -6,12 +6,12 @@
 #include "Runtime/Core/Public/Misc/Paths.h"
 #include "PlatformFilemanager.h"
 
+DEFINE_LOG_CATEGORY(PFNN_Logging);
+
 UPhaseFunctionNeuralNetwork::UPhaseFunctionNeuralNetwork(): mode(0)
 {
-}
+	UE_LOG(PFNN_Logging, Log, TEXT("Creating PhaseFunctionNeuralNetwork Object"));
 
-UPhaseFunctionNeuralNetwork::UPhaseFunctionNeuralNetwork(const int arg_PFNNMode) : mode(arg_PFNNMode)
-{
 	Xp = Eigen::ArrayXf(static_cast<int>(XDIM));
 	Yp = Eigen::ArrayXf(static_cast<int>(YDIM));
 
@@ -33,6 +33,9 @@ UPhaseFunctionNeuralNetwork::~UPhaseFunctionNeuralNetwork()
 
 void UPhaseFunctionNeuralNetwork::LoadNetworkData()
 {
+
+	UE_LOG(PFNN_Logging, Log, TEXT("Loading PFNN Data..."));
+
 	//TODO: Look into Asynchronous Asset Loading -Elwin
 	LoadWeights(Xmean, XDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/Xmean.bin")));
 	LoadWeights(Xstd, XDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/Xstd.bin")));
@@ -93,6 +96,8 @@ void UPhaseFunctionNeuralNetwork::LoadNetworkData()
 
 		break;
 	}
+
+	UE_LOG(PFNN_Logging, Log, TEXT("Finished Loading PFNN Data"));
 }
 void UPhaseFunctionNeuralNetwork::LoadWeights(Eigen::ArrayXXf& arg_A, const int arg_Rows, const int arg_Cols, const FString arg_FileName, ...)
 {
@@ -126,6 +131,8 @@ void UPhaseFunctionNeuralNetwork::LoadWeights(Eigen::ArrayXXf& arg_A, const int 
 }
 void UPhaseFunctionNeuralNetwork::LoadWeights(Eigen::ArrayXf& arg_V, const int arg_Items, const FString arg_FileName, ...)
 {
+	UE_LOG(PFNN_Logging, Log, TEXT("Loading Weights from file: %s"), *arg_FileName);
+
 	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 
 	FString RelativePath = FPaths::ProjectDir();
@@ -135,7 +142,7 @@ void UPhaseFunctionNeuralNetwork::LoadWeights(Eigen::ArrayXf& arg_V, const int a
 
 	if (FileHandle == nullptr)
 	{
-		//UE_LOG(NeuralNetworkLoading, Fatal, TEXT("Fatal error, Failed to load Phase Function Neural Network weights. File name "));
+		UE_LOG(PFNN_Logging, Error, TEXT("Failed to load Weights file: %s"), *arg_FileName);
 		return;
 	}
 
@@ -151,6 +158,8 @@ void UPhaseFunctionNeuralNetwork::LoadWeights(Eigen::ArrayXf& arg_V, const int a
 	}
 
 	delete FileHandle;
+
+	UE_LOG(PFNN_Logging, Log, TEXT("Finished Loading Weights from file: %s"), *arg_FileName);
 }
 
 void UPhaseFunctionNeuralNetwork::ELU(Eigen::ArrayXf& arg_X)
