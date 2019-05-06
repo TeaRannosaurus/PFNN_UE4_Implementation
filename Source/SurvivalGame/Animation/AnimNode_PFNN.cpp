@@ -192,19 +192,22 @@ void FAnimNode_PFNN::Initialize_AnyThread(const FAnimationInitializeContext& Con
 {
 	FAnimNode_Base::Initialize_AnyThread(Context);
 	
+	EvaluateGraphExposedInputs.Execute(Context);
+
 	PFNNAnimInstance = GetPFNNInstanceFromContext(Context);
 	if (!PFNNAnimInstance) 
 	{
 		UE_LOG(LogTemp, Error, TEXT("PFNN Animation node should only be added to a PFNNAnimInstance child class!"));
 	}
 
-	BasePose.Initialize(Context);
 	LoadData();
 }
 
 void FAnimNode_PFNN::Update_AnyThread(const FAnimationUpdateContext& Context)
 {
 	FAnimNode_Base::Update_AnyThread(Context);
+
+	EvaluateGraphExposedInputs.Execute(Context);
 
 	if (PFNNAnimInstance) 
 	{
@@ -215,13 +218,10 @@ void FAnimNode_PFNN::Update_AnyThread(const FAnimationUpdateContext& Context)
 	if(Trajectory != nullptr)
 		ApplyPFNN();
 
-	BasePose.Update(Context);
 }
 
 void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& Output)
 {
-	BasePose.Evaluate(Output);
-
 	const FTransform& CharacterTransform = Output.AnimInstanceProxy->GetActorTransform();
 
 	for (int32 i = 0; i < Output.Pose.GetNumBones(); i++)

@@ -60,10 +60,6 @@ struct SURVIVALGAME_API FAnimNode_PFNN : public FAnimNode_Base
 		JOINT_NUM = 31
 	};
 
-	/** Base Pose*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Links)
-	FPoseLink BasePose;
-
 	class UPFNNAnimInstance* PFNNAnimInstance;
 
 	UTrajectoryComponent* Trajectory = nullptr;
