@@ -75,10 +75,9 @@ struct SURVIVALGAME_API FAnimNode_PFNN : public FAnimNode_Base
 	glm::mat4 JointGlobalAnimXform[JOINT_NUM];
 	int JointParents[JOINT_NUM];
 
-	UPROPERTY(EditAnywhere, Category = PFNN, meta = (ClampMin = 0, ClampMax = 2, UIMin = 0, UIMax = 2))
-	int PFNNMode;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = PFNN)
 	float Phase;
+
 	static UPhaseFunctionNeuralNetwork* PFNN;
 
 };

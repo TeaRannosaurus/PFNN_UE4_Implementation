@@ -8,7 +8,7 @@
 
 DEFINE_LOG_CATEGORY(PFNN_Logging);
 
-UPhaseFunctionNeuralNetwork::UPhaseFunctionNeuralNetwork(): mode(0)
+UPhaseFunctionNeuralNetwork::UPhaseFunctionNeuralNetwork() : Mode(EPFNNMode::PM_Cubic)
 {
 	UE_LOG(PFNN_Logging, Log, TEXT("Creating PhaseFunctionNeuralNetwork Object"));
 
@@ -42,10 +42,10 @@ void UPhaseFunctionNeuralNetwork::LoadNetworkData()
 	LoadWeights(Ymean, YDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/Ymean.bin")));
 	LoadWeights(Ystd, YDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/Ystd.bin")));
 
-	switch (mode)
+	switch (Mode)
 	{
 
-	case MODE_CONSTANT:
+	case EPFNNMode::PM_Constant:
 
 		W0.SetNum(50); W1.SetNum(50); W2.SetNum(50);
 		b0.SetNum(50); b1.SetNum(50); b2.SetNum(50);
@@ -62,7 +62,7 @@ void UPhaseFunctionNeuralNetwork::LoadNetworkData()
 
 		break;
 
-	case MODE_LINEAR:
+	case EPFNNMode::PM_Linear:
 
 		W0.SetNum(10); W1.SetNum(10); W2.SetNum(10);
 		b0.SetNum(10); b1.SetNum(10); b2.SetNum(10);
@@ -79,7 +79,7 @@ void UPhaseFunctionNeuralNetwork::LoadNetworkData()
 
 		break;
 
-	case MODE_CUBIC:
+	case EPFNNMode::PM_Cubic:
 
 		W0.SetNum(4); W1.SetNum(4); W2.SetNum(4);
 		b0.SetNum(4); b1.SetNum(4); b2.SetNum(4);
@@ -204,9 +204,9 @@ void UPhaseFunctionNeuralNetwork::Predict(float arg_Phase)
 	Xp = (Xp - Xmean) / Xstd;
 
 	arg_Phase = FMath::Abs(arg_Phase);
-	switch (mode)
+	switch (Mode)
 	{
-	case MODE_CONSTANT:
+	case EPFNNMode::PM_Constant:
 		pindex_1 = static_cast<int>((arg_Phase / (2 * PI)) * 50);
 		H0 = (W0[pindex_1].matrix() * Xp.matrix()).array() + b0[pindex_1];
 		ELU(H0);
@@ -215,7 +215,7 @@ void UPhaseFunctionNeuralNetwork::Predict(float arg_Phase)
 		Yp = (W2[pindex_1].matrix() * H1.matrix()).array() + b2[pindex_1];
 		break;
 
-	case MODE_LINEAR:
+	case EPFNNMode::PM_Linear:
 		pamount = fmod((arg_Phase / (2 * PI)) * 10, 1.0);
 		pindex_1 = (int)((arg_Phase / (2 * PI)) * 10);
 		pindex_2 = ((pindex_1 + 1) % 10);
@@ -232,7 +232,7 @@ void UPhaseFunctionNeuralNetwork::Predict(float arg_Phase)
 		Yp = (W2p.matrix() * H1.matrix()).array() + b2p;
 		break;
 
-	case MODE_CUBIC:
+	case EPFNNMode::PM_Cubic:
 		pamount = fmod((arg_Phase / (2 * PI)) * 4, 1.0);
 		pindex_1 = (int)((arg_Phase / (2 * PI)) * 4);
 		pindex_0 = ((pindex_1 + 3) % 4);

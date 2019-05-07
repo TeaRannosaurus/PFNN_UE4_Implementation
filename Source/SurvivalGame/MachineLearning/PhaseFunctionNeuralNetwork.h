@@ -4,40 +4,31 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "Engine/DeveloperSettings.h"
 #include "ThirdParty/Eigen/Dense"
 #include "PhaseFunctionNeuralNetwork.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(PFNN_Logging, Log, All);
 
+UENUM(BlueprintType)
+enum class EPFNNMode : uint8 
+{
+	PM_Constant		UMETA(DisplayName="Constant"),
+	PM_Linear		UMETA(DisplayName="Linear"),
+	PM_Cubic		UMETA(DisplayName="Cubic")
+};
+
 /**
  * 
  */
-UCLASS()
-class SURVIVALGAME_API UPhaseFunctionNeuralNetwork : public UObject
+UCLASS(Config=Engine, defaultconfig, meta=(DisplayName="PFNN Settings"))
+class SURVIVALGAME_API UPhaseFunctionNeuralNetwork : public UDeveloperSettings
 {
 public:
 	GENERATED_BODY()
 	UPhaseFunctionNeuralNetwork();
 	~UPhaseFunctionNeuralNetwork();
 	
-	int mode;
-
-	//DO NOT CHANGE! These values determine the dimentions of the Neural Network. Changing them without knowing what you are doing will crash the engine.
-	enum { XDIM = 342, YDIM = 311, HDIM = 512 };
-	enum { MODE_CONSTANT = 0, MODE_LINEAR = 1, MODE_CUBIC = 2};
-
-	Eigen::ArrayXf Xmean, Xstd;
-	Eigen::ArrayXf Ymean, Ystd;
-
-	TArray<Eigen::ArrayXXf> W0, W1, W2;
-	TArray<Eigen::ArrayXf>  b0, b1, b2;
-
-	Eigen::ArrayXf  Xp, Yp;
-	Eigen::ArrayXf  H0, H1;
-	Eigen::ArrayXXf W0p, W1p, W2p;
-	Eigen::ArrayXf  b0p, b1p, b2p;
-	//Ending of things that you should not change.
-
 	/*
 	* @Description Load in the Phase Function Neural Network.
 	*/
@@ -105,4 +96,24 @@ public:
 	* @Param[in] arg_Phase, Phase to base the prediction upon
 	*/
 	void Predict(float arg_Phase);
+
+public:
+
+	UPROPERTY(EditAnywhere, Config, Category = "Network", meta = (ConfigRestartRequired = true))
+	EPFNNMode Mode;
+
+	//DO NOT CHANGE! These values determine the dimentions of the Neural Network. Changing them without knowing what you are doing will crash the engine.
+	enum { XDIM = 342, YDIM = 311, HDIM = 512 };
+
+	Eigen::ArrayXf Xmean, Xstd;
+	Eigen::ArrayXf Ymean, Ystd;
+
+	TArray<Eigen::ArrayXXf> W0, W1, W2;
+	TArray<Eigen::ArrayXf>  b0, b1, b2;
+
+	Eigen::ArrayXf  Xp, Yp;
+	Eigen::ArrayXf  H0, H1;
+	Eigen::ArrayXXf W0p, W1p, W2p;
+	Eigen::ArrayXf  b0p, b1p, b2p;
+	//Ending of things that you should not change.
 };

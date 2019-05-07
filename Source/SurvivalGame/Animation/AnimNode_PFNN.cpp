@@ -12,7 +12,7 @@
 
 UPhaseFunctionNeuralNetwork* FAnimNode_PFNN::PFNN = nullptr;
 
-FAnimNode_PFNN::FAnimNode_PFNN(): Trajectory(nullptr), PFNNAnimInstance(nullptr), PFNNMode(2)
+FAnimNode_PFNN::FAnimNode_PFNN(): Trajectory(nullptr), PFNNAnimInstance(nullptr)
 {
 }
 
@@ -63,10 +63,9 @@ void FAnimNode_PFNN::LoadXForms()
 
 void FAnimNode_PFNN::LoadPFNN() const
 {
-	if(PFNN == nullptr || PFNN->mode != PFNNMode)
+	if(PFNN == nullptr)
 	{
 		PFNN = NewObject<UPhaseFunctionNeuralNetwork>();
-		PFNN->mode = PFNNMode;
 		PFNN->LoadNetworkData();
 	}
 }
