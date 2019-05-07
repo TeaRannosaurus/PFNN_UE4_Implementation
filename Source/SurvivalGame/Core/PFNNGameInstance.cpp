@@ -6,5 +6,5 @@
 
 UPFNNGameInstance::UPFNNGameInstance(const FObjectInitializer& arg_ObjectInitializer) : Super(arg_ObjectInitializer) 
 {
-	PFNNDataContainer = NewObject<UPFNNDataContainer>(this, UPFNNDataContainer::StaticClass());
+	PFNNDataContainer = NewObject<UPFNNDataContainer>(this, UPFNNDataContainer::StaticClass(), TEXT("PFNN DataContainer"));
 }
