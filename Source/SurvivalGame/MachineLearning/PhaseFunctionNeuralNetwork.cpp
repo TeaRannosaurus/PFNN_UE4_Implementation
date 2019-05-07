@@ -2,9 +2,11 @@
 
 #include "PhaseFunctionNeuralNetwork.h"
 
+#include "Engine/Engine.h"
+#include "Kismet/GameplayStatics.h"
 #include "GenericPlatformFile.h"
-#include "Runtime/Core/Public/Misc/Paths.h"
-#include "PlatformFilemanager.h"
+#include "PFNNDataContainer.h"
+#include "Core/PFNNGameInstance.h"
 
 DEFINE_LOG_CATEGORY(PFNN_Logging);
 
@@ -33,133 +35,11 @@ UPhaseFunctionNeuralNetwork::~UPhaseFunctionNeuralNetwork()
 
 void UPhaseFunctionNeuralNetwork::LoadNetworkData()
 {
+	UPFNNGameInstance* GameInstance = Cast<UPFNNGameInstance>(UGameplayStatics::GetGameInstance(this));
 
-	UE_LOG(PFNN_Logging, Log, TEXT("Loading PFNN Data..."));
-
-	//TODO: Look into Asynchronous Asset Loading -Elwin
-	LoadWeights(Xmean, XDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/Xmean.bin")));
-	LoadWeights(Xstd, XDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/Xstd.bin")));
-	LoadWeights(Ymean, YDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/Ymean.bin")));
-	LoadWeights(Ystd, YDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/Ystd.bin")));
-
-	switch (Mode)
-	{
-
-	case EPFNNMode::PM_Constant:
-
-		W0.SetNum(50); W1.SetNum(50); W2.SetNum(50);
-		b0.SetNum(50); b1.SetNum(50); b2.SetNum(50);
-
-		for (int i = 0; i < 50; i++)
-		{
-			LoadWeights(W0[i], HDIM, XDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W0_%03d.bin"), i));
-			LoadWeights(W1[i], HDIM, HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W1_%03d.bin"), i));
-			LoadWeights(W2[i], YDIM, HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W2_%03d.bin"), i));
-			LoadWeights(b0[i], HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b0_%03d.bin"), i));
-			LoadWeights(b1[i], HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b1_%03d.bin"), i));
-			LoadWeights(b2[i], YDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b2_%03d.bin"), i));
-		}
-
-		break;
-
-	case EPFNNMode::PM_Linear:
-
-		W0.SetNum(10); W1.SetNum(10); W2.SetNum(10);
-		b0.SetNum(10); b1.SetNum(10); b2.SetNum(10);
-
-		for (int i = 0; i < 10; i++)
-		{
-			LoadWeights(W0[i], HDIM, XDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W0_%03d.bin"), i * 5));
-			LoadWeights(W1[i], HDIM, HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W1_%03d.bin"), i * 5));
-			LoadWeights(W2[i], YDIM, HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W2_%03d.bin"), i * 5));
-			LoadWeights(b0[i], HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b0_%03d.bin"), i * 5));
-			LoadWeights(b1[i], HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b1_%03d.bin"), i * 5));
-			LoadWeights(b2[i], YDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b2_%03d.bin"), i * 5));
-		}
-
-		break;
-
-	case EPFNNMode::PM_Cubic:
-
-		W0.SetNum(4); W1.SetNum(4); W2.SetNum(4);
-		b0.SetNum(4); b1.SetNum(4); b2.SetNum(4);
-
-		for (int i = 0; i < 4; i++)
-		{
-			LoadWeights(W0[i], HDIM, XDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W0_%03i.bin"), static_cast<int>(i * 12.5)));
-			LoadWeights(W1[i], HDIM, HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W1_%03i.bin"), static_cast<int>(i * 12.5)));
-			LoadWeights(W2[i], YDIM, HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W2_%03i.bin"), static_cast<int>(i * 12.5)));
-			LoadWeights(b0[i], HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b0_%03i.bin"), static_cast<int>(i * 12.5)));
-			LoadWeights(b1[i], HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b1_%03i.bin"), static_cast<int>(i * 12.5)));
-			LoadWeights(b2[i], YDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b2_%03i.bin"), static_cast<int>(i * 12.5)));
-		}
-
-		break;
-	}
-
-	UE_LOG(PFNN_Logging, Log, TEXT("Finished Loading PFNN Data"));
-}
-void UPhaseFunctionNeuralNetwork::LoadWeights(Eigen::ArrayXXf& arg_A, const int arg_Rows, const int arg_Cols, const FString arg_FileName, ...)
-{
-	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
-
-	FString RelativePath = FPaths::ProjectDir();
-	const FString FullPath = RelativePath += arg_FileName;
-
-	IFileHandle* FileHandle = PlatformFile.OpenRead(*FullPath);
-
-	if (FileHandle == nullptr)
-	{
-		//UE_LOG(NeuralNetworkLoading, Fatal, TEXT("Fatal error, Failed to load Phase Function Neural Network weights. File name "));
-		return;
-	}
-
-	arg_A = Eigen::ArrayXXf(arg_Rows, arg_Cols);
-	for (int x = 0; x < arg_Rows; x++)
-	{
-		for (int y = 0; y < arg_Cols; y++)
-		{
-			FFloat32 item;
-			uint8* ByteBuffer = reinterpret_cast<uint8*>(&item);
-
-			FileHandle->Read(ByteBuffer, sizeof(FFloat32));
-			arg_A(x, y) = item.FloatValue;
-		}
-	}
-
-	delete FileHandle;
-}
-void UPhaseFunctionNeuralNetwork::LoadWeights(Eigen::ArrayXf& arg_V, const int arg_Items, const FString arg_FileName, ...)
-{
-	UE_LOG(PFNN_Logging, Log, TEXT("Loading Weights from file: %s"), *arg_FileName);
-
-	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
-
-	FString RelativePath = FPaths::ProjectDir();
-	const FString FullPath = RelativePath += arg_FileName;
-
-	IFileHandle* FileHandle = PlatformFile.OpenRead(*FullPath);
-
-	if (FileHandle == nullptr)
-	{
-		UE_LOG(PFNN_Logging, Error, TEXT("Failed to load Weights file: %s"), *arg_FileName);
-		return;
-	}
-
-	arg_V = Eigen::ArrayXf(arg_Items);
-
-	for (int i = 0; i < arg_Items; i++)
-	{
-		FFloat32 item;
-		uint8* ByteBuffer = reinterpret_cast<uint8*>(&item);
-
-		FileHandle->Read(ByteBuffer, sizeof(FFloat32));
-		arg_V(i) = item.FloatValue;
-	}
-
-	delete FileHandle;
-
-	UE_LOG(PFNN_Logging, Log, TEXT("Finished Loading Weights from file: %s"), *arg_FileName);
+	UPFNNDataContainer* DataContainer = GameInstance->GetPFNNDataContainer();
+	if(DataContainer->IsDataLoaded())
+		DataContainer->GetNetworkData(*this);
 }
 
 void UPhaseFunctionNeuralNetwork::ELU(Eigen::ArrayXf& arg_X)

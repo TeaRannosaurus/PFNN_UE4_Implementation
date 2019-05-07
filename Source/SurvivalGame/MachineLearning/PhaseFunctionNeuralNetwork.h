@@ -33,21 +33,6 @@ public:
 	* @Description Load in the Phase Function Neural Network.
 	*/
 	void LoadNetworkData();
-	/*
-	* @Description Load weights for the Phase Function Neural Network
-	* @Param[in] arg_A, Base of eigen array
-	* @Param[in] arg_Rows, Number of rows in the matrix
-	* @Param[in] arg_Cols, Number of colums in the matrix
-	* @Param[in] arg_FileName, The file path where to find the Neural Network data
-	*/
-	static void LoadWeights(Eigen::ArrayXXf& arg_A, const int arg_Rows, const int arg_Cols, const FString arg_FileName, ...);
-	/*
-	* @Description Load weights for the Phase Function Neural Network
-	* @Param[in] arg_V, Base of eigen array
-	* @Param[in] arg_Items, Items that need to be loaded in
-	* @Param[in] arg_FileName, The file path where to find the Neural Network data
-	*/
-	static void LoadWeights(Eigen::ArrayXf &arg_V, const int arg_Items, const FString arg_FileName, ...);
 
 	/*
 	* @Description Exponential Linear Unit(ELU) activation function

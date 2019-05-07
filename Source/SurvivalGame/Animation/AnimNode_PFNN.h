@@ -1,13 +1,17 @@
 // Copyright 2018 Sticks & Stones. All Rights Reserved.
 
 #pragma once
+#define GLM_ENABLE_EXPERIMENTAL
 
 
 #include "CoreMinimal.h"
 #include "Animation/AnimNodeBase.h"
 #include <ThirdParty/glm/vec3.hpp>
 #include <ThirdParty/glm/mat4x4.hpp>
+#include <ThirdParty/glm/gtx/quaternion.hpp>
+
 #include "AnimNode_PFNN.generated.h"
+
 
 class UTrajectoryComponent;
 class UPhaseFunctionNeuralNetwork;
@@ -27,6 +31,7 @@ struct SURVIVALGAME_API FAnimNode_PFNN : public FAnimNode_Base
 	void LoadPFNN() const;
 
 	void ApplyPFNN();
+	glm::quat QuaternionExpression(const glm::vec3 arg_Length);
 
 	class UPFNNAnimInstance* GetPFNNInstanceFromContext(const FAnimationInitializeContext& Context);
 	class UPFNNAnimInstance* GetPFNNInstanceFromContext(const FAnimationUpdateContext& Context);
