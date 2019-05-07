@@ -27,7 +27,7 @@ void UPFNNDataContainer::LoadNetworkData(const EPFNNMode arg_Mode)
 {
 	if(bIsDataLoaded)
 	{
-		UE_LOG(PFNN_Logging, Log, TEXT("Attempted to load PFNN data but it was already loaded. Attempt has been skiped."));
+		UE_LOG(PFNN_Logging, Log, TEXT("Attempted to load PFNN data but it was already loaded. Attempt has been skipped."));
 		return;
 	}
 
@@ -41,7 +41,6 @@ void UPFNNDataContainer::LoadNetworkData(const EPFNNMode arg_Mode)
 
 	switch (arg_Mode)
 	{
-
 	case EPFNNMode::PM_Constant:
 
 		W0.SetNum(50); W1.SetNum(50); W2.SetNum(50);

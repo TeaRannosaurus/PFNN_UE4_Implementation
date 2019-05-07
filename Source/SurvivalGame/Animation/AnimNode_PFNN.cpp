@@ -13,7 +13,7 @@
 
 UPhaseFunctionNeuralNetwork* FAnimNode_PFNN::PFNN = nullptr;
 
-FAnimNode_PFNN::FAnimNode_PFNN(): Trajectory(nullptr), PFNNAnimInstance(nullptr)
+FAnimNode_PFNN::FAnimNode_PFNN(): Trajectory(nullptr), PFNNAnimInstance(nullptr), bIsPFNNLoaded(false)
 {
 }
 
@@ -62,12 +62,12 @@ void FAnimNode_PFNN::LoadXForms()
 	delete FileHandle;
 }
 
-void FAnimNode_PFNN::LoadPFNN() const
+void FAnimNode_PFNN::LoadPFNN()
 {
-	if(PFNN == nullptr)
+	if((PFNN == nullptr || !bIsPFNNLoaded) && Trajectory)
 	{
 		PFNN = NewObject<UPhaseFunctionNeuralNetwork>();
-		PFNN->LoadNetworkData();
+		bIsPFNNLoaded = PFNN->LoadNetworkData(Trajectory->GetOwner());
 	}
 }
 
@@ -265,8 +265,9 @@ void FAnimNode_PFNN::ApplyPFNN()
 	}
 
 
-	TArray<FVector> FinalBoneLocations;
-	TArray<FQuat>	FinalBoneRotations;
+	FinalBoneLocations.Empty();
+	FinalBoneRotations.Empty();
+
 	FinalBoneLocations.SetNum(JOINT_NUM);
 	FinalBoneRotations.SetNum(JOINT_NUM);
 	const float FinalScale = 1.0f;
@@ -330,13 +331,16 @@ void FAnimNode_PFNN::Initialize_AnyThread(const FAnimationInitializeContext& Con
 	{
 		UE_LOG(LogTemp, Error, TEXT("PFNN Animation node should only be added to a PFNNAnimInstance child class!"));
 	}
-
-	LoadData();
 }
 
 void FAnimNode_PFNN::Update_AnyThread(const FAnimationUpdateContext& Context)
 {
 	FAnimNode_Base::Update_AnyThread(Context);
+
+	if (!bIsPFNNLoaded) 
+	{
+		LoadData();
+	}
 
 	EvaluateGraphExposedInputs.Execute(Context);
 
@@ -345,24 +349,28 @@ void FAnimNode_PFNN::Update_AnyThread(const FAnimationUpdateContext& Context)
 		Trajectory = PFNNAnimInstance->GetOwningTrajectoryComponent();
 	}
 	
-
-	if(Trajectory != nullptr)
+	if(Trajectory != nullptr && bIsPFNNLoaded)
 		ApplyPFNN();
-
 }
 
 void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& Output)
 {
 	const FTransform& CharacterTransform = Output.AnimInstanceProxy->GetActorTransform();
-
-	for (int32 i = 0; i < Output.Pose.GetNumBones(); i++)
+	if (FinalBoneLocations.Num() >= JOINT_NUM && FinalBoneRotations.Num() >= JOINT_NUM) 
 	{
-		const FCompactPoseBoneIndex RootBoneIndex(i);
+		for (int32 i = 0; i < JOINT_NUM; i++)
+		{
+			const FCompactPoseBoneIndex RootBoneIndex(i);
 
-		Output.Pose[RootBoneIndex].SetLocation(Output.Pose[RootBoneIndex].GetLocation());
-		Output.Pose[RootBoneIndex].SetRotation(Output.Pose[RootBoneIndex].GetRotation());
+			Output.Pose[RootBoneIndex].SetLocation(FinalBoneLocations[i]);
+			Output.Pose[RootBoneIndex].SetRotation(FinalBoneRotations[i]);
 
-		Output.AnimInstanceProxy->AnimDrawDebugSphere(Output.Pose[RootBoneIndex].GetLocation() + CharacterTransform.GetLocation(), 2.5f, 12, FColor::Green, false, -1.0f);
+			Output.AnimInstanceProxy->AnimDrawDebugSphere(Output.Pose[RootBoneIndex].GetLocation() + CharacterTransform.GetLocation(), 2.5f, 12, FColor::Green, false, -1.0f);
+		}
+		Output.Pose.NormalizeRotations();
 	}
-	Output.Pose.NormalizeRotations();
+	else 
+	{
+		UE_LOG(PFNN_Logging, Error, TEXT("PFNN results were not properly applied!"));
+	}
 }

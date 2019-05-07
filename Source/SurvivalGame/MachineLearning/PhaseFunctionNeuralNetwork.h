@@ -32,7 +32,7 @@ public:
 	/*
 	* @Description Load in the Phase Function Neural Network.
 	*/
-	void LoadNetworkData();
+	bool LoadNetworkData(UObject* arg_ContextObject);
 
 	/*
 	* @Description Exponential Linear Unit(ELU) activation function

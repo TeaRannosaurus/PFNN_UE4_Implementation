@@ -27,19 +27,36 @@ UPhaseFunctionNeuralNetwork::UPhaseFunctionNeuralNetwork() : Mode(EPFNNMode::PM_
 	b0p = Eigen::ArrayXf(static_cast<int>(HDIM));
 	b1p = Eigen::ArrayXf(static_cast<int>(HDIM));
 	b2p = Eigen::ArrayXf(static_cast<int>(YDIM));
+
 }
 
 UPhaseFunctionNeuralNetwork::~UPhaseFunctionNeuralNetwork()
 {
 }
 
-void UPhaseFunctionNeuralNetwork::LoadNetworkData()
+bool UPhaseFunctionNeuralNetwork::LoadNetworkData(UObject* arg_ContextObject)
 {
-	UPFNNGameInstance* GameInstance = Cast<UPFNNGameInstance>(UGameplayStatics::GetGameInstance(this));
+	UPFNNGameInstance* GameInstance = Cast<UPFNNGameInstance>(UGameplayStatics::GetGameInstance(arg_ContextObject));
+	if (GameInstance) 
+	{
+		UPFNNDataContainer* DataContainer = GameInstance->GetPFNNDataContainer();
+		DataContainer->LoadNetworkData(Mode);
+		if (DataContainer->IsDataLoaded()) 
+		{
+			DataContainer->GetNetworkData(*this);
+			return true;
+		}
+		else 
+		{
+			return false;
+		}
 
-	UPFNNDataContainer* DataContainer = GameInstance->GetPFNNDataContainer();
-	if(DataContainer->IsDataLoaded())
-		DataContainer->GetNetworkData(*this);
+	}
+	else 
+	{
+		UE_LOG(PFNN_Logging, Error, TEXT("Invalid GameInstance for PFNN"));
+		return false;
+	}
 }
 
 void UPhaseFunctionNeuralNetwork::ELU(Eigen::ArrayXf& arg_X)

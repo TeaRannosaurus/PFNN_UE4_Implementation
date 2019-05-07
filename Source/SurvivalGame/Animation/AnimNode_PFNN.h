@@ -28,7 +28,7 @@ struct SURVIVALGAME_API FAnimNode_PFNN : public FAnimNode_Base
 
 	void LoadData();
 	void LoadXForms();
-	void LoadPFNN() const;
+	void LoadPFNN();
 
 	void ApplyPFNN();
 	glm::quat QuaternionExpression(const glm::vec3 arg_Length);
@@ -85,4 +85,8 @@ struct SURVIVALGAME_API FAnimNode_PFNN : public FAnimNode_Base
 
 	static UPhaseFunctionNeuralNetwork* PFNN;
 
+	TArray<FVector> FinalBoneLocations;
+	TArray<FQuat>	FinalBoneRotations;
+
+	bool bIsPFNNLoaded;
 };
