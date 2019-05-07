@@ -18,6 +18,8 @@ public:
 
 	UPFNNGameInstance(const FObjectInitializer& arg_ObjectInitializer);
 
+	class UPFNNDataContainer* GetPFNNDataContainer();
+
 private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "True"))

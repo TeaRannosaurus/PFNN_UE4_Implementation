@@ -8,3 +8,8 @@ UPFNNGameInstance::UPFNNGameInstance(const FObjectInitializer& arg_ObjectInitial
 {
 	PFNNDataContainer = NewObject<UPFNNDataContainer>(this, UPFNNDataContainer::StaticClass(), TEXT("PFNN DataContainer"));
 }
+
+UPFNNDataContainer* UPFNNGameInstance::GetPFNNDataContainer() 
+{
+	return PFNNDataContainer;
+}
