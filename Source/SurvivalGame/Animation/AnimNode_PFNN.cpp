@@ -2,7 +2,6 @@
 
 #include "AnimNode_PFNN.h"
 #include "PFNNAnimInstance.h"
-#include "PFNN_Trajectory.h"
 #include "Gameplay/Movement/TrajectoryComponent.h"
 
 #include "AnimInstanceProxy.h"
