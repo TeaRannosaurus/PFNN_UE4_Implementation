@@ -356,7 +356,7 @@ void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 		{
 			const FCompactPoseBoneIndex RootBoneIndex(i);
 
-			arg_Output.Pose[RootBoneIndex].SetLocation(FinalBoneLocations[i]);
+			arg_Output.Pose[RootBoneIndex].SetLocation(FinalBoneLocations[i] * 0.01f);
 			arg_Output.Pose[RootBoneIndex].SetRotation(FinalBoneRotations[i]);
 
 			arg_Output.AnimInstanceProxy->AnimDrawDebugSphere(arg_Output.Pose[RootBoneIndex].GetLocation() + CharacterTransform.GetLocation(), 2.5f, 12, FColor::Green, false, -1.0f);
