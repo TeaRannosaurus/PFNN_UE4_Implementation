@@ -65,6 +65,11 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = Gaits)
 	float GaitBump[LENGTH];
 
+	glm::vec3 GetRootPosition() const;
+	glm::vec3 GetPreviousRootPosition() const;
+	glm::mat3 GetRootRotation() const;
+	glm::mat3 GetPreviousRootRotation() const;
+
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 protected:
