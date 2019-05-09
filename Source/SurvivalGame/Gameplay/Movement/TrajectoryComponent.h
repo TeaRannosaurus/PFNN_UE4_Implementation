@@ -66,11 +66,12 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = Gaits)
 	float GaitBump[LENGTH];
 
-	//END LOG THESE VARIABLES
+	glm::vec3 GetRootPosition() const;
+	glm::vec3 GetPreviousRootPosition() const;
+	glm::mat3 GetRootRotation() const;
+	glm::mat3 GetPreviousRootRotation() const;
 
-	virtual void TickComponent(float arg_DeltaTime, ELevelTick arg_TickType, FActorComponentTickFunction* arg_ThisTickFunction) override;
-	
-	void LogTrajectoryData(int arg_FrameCounter);
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* arg_ThisTickFunction) override;
 
 protected:
 	virtual void BeginPlay() override;

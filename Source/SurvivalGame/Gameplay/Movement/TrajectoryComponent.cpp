@@ -69,6 +69,34 @@ void UTrajectoryComponent::BeginPlay()
 	IsValid(OwnerPawn);
 }
 
+glm::vec3 UTrajectoryComponent::GetRootPosition() const
+{
+	return glm::vec3(
+		GetOwner()->GetActorLocation().X,
+		GetOwner()->GetActorLocation().Y,
+		Heights[LENGTH / 2]
+	);
+}
+
+glm::vec3 UTrajectoryComponent::GetPreviousRootPosition() const
+{
+	return glm::vec3(
+		Positions[LENGTH / 2 - 1].x,
+		Positions[LENGTH / 2 - 1].y,
+		Heights[LENGTH / 2 - 1]
+	);
+}
+
+glm::mat3 UTrajectoryComponent::GetRootRotation() const
+{
+	return Rotations[LENGTH / 2];
+}
+
+glm::mat3 UTrajectoryComponent::GetPreviousRootRotation() const
+{
+	return Rotations[LENGTH / 2 - 1];
+}
+
 void UTrajectoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
@@ -87,6 +115,7 @@ void UTrajectoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 	const glm::vec3 TrajectoryTargetVelocityNew = TargetVelocitySpeed * (TrajectoryTargetRotation * glm::vec3(1, 0, 0));
 	TargetVelocity = glm::mix(TargetVelocity, TrajectoryTargetVelocityNew, ExtraVelocitySmooth);
 
+	StrafeAmount = glm::mix(StrafeAmount, StrafeTarget, ExtraStrafeSmooth);
 	const glm::vec3 TrajectoryTargetVelocityDirection = glm::length(TargetVelocity) < 1e-05 ? TargetDirection : glm::normalize(TargetVelocity);
 	TrajectoryTargetDirectionNew = MixDirections(TrajectoryTargetVelocityDirection, TrajectoryTargetDirectionNew, StrafeAmount);
 	TargetDirection = MixDirections(TargetDirection, TrajectoryTargetDirectionNew, ExtraDirectionSmooth);
