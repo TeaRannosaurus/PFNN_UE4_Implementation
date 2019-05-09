@@ -46,18 +46,20 @@ struct SURVIVALGAME_API FAnimNode_PFNN : public FAnimNode_Base
 	 * Default AnimNode function to cache bones
 	 * @param[in] Context, Bone context
 	 */
-	virtual void CacheBones_AnyThread(const FAnimationCacheBonesContext & Context)	override {}
+	virtual void CacheBones_AnyThread(const FAnimationCacheBonesContext & arg_Context)	override {}
 	/**
 	* Default AnimNode function to update bones
 	* @param[in] Context, Animation context
 	*/
-	virtual void Update_AnyThread(const FAnimationUpdateContext & Context) 			override;
+	virtual void Update_AnyThread(const FAnimationUpdateContext & arg_Context) 			override;
 	/**
 	* Default AnimNode function to evaluate bones
 	* @param[in] Context, Bone context
 	*/
-	virtual void Evaluate_AnyThread(FPoseContext& Output) 							override;
+	virtual void Evaluate_AnyThread(FPoseContext& arg_Output) 							override;
 	// End of FAnimNode_Base interface
+
+	void LogNetworkData(int arg_FrameCounter);
 
 	//Amount of joints
 	enum
@@ -68,6 +70,8 @@ struct SURVIVALGAME_API FAnimNode_PFNN : public FAnimNode_Base
 	class UPFNNAnimInstance* PFNNAnimInstance;
 
 	UTrajectoryComponent* Trajectory = nullptr;
+
+	//LOG THESE VARIABLES
 
 	glm::vec3 JointPosition[JOINT_NUM];
 	glm::vec3 JointVelocitys[JOINT_NUM];
@@ -83,10 +87,15 @@ struct SURVIVALGAME_API FAnimNode_PFNN : public FAnimNode_Base
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = PFNN)
 	float Phase;
 
-	static UPhaseFunctionNeuralNetwork* PFNN;
-
 	TArray<FVector> FinalBoneLocations;
 	TArray<FQuat>	FinalBoneRotations;
 
+	//END LOG THESE VARIABLES
+
+	static UPhaseFunctionNeuralNetwork* PFNN;
+
+	int FrameCounter;
+
 	bool bIsPFNNLoaded;
+
 };

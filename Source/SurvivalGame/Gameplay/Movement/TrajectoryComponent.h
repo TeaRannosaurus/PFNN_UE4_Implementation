@@ -19,6 +19,8 @@ public:
 
 	enum { LENGTH = 120 };
 
+	//LOG THESE VARIABLES
+
 	//Basic values
 	glm::vec3 TargetDirection;
 	glm::vec3 TargetVelocity;
@@ -45,7 +47,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = ExtraSmoothing)
 	float ExtraJointSmooth;
 
-
 	//Positional data
 	glm::vec3 Positions[LENGTH];
 	glm::vec3 Directions[LENGTH];
@@ -65,12 +66,19 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = Gaits)
 	float GaitBump[LENGTH];
 
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	//END LOG THESE VARIABLES
+
+	virtual void TickComponent(float arg_DeltaTime, ELevelTick arg_TickType, FActorComponentTickFunction* arg_ThisTickFunction) override;
+	
+	void LogTrajectoryData(int arg_FrameCounter);
 
 protected:
 	virtual void BeginPlay() override;
 
 private:
+
+
+
 	APawn* OwnerPawn;
 
 	glm::vec2 CurrentFrameInput;
@@ -89,6 +97,8 @@ private:
 	* @Return The result of liniar blending X, Y and the scalar
 	*/
 	static glm::vec3 MixDirections(const glm::vec3 arg_XDirection, const glm::vec3 arg_YDirection, const float arg_Scalar);
+
+
 
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, Category = Debug)

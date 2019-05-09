@@ -11,9 +11,11 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <ThirdParty/glm/gtx/transform.inl>
 
+#include <fstream>
+
 UPhaseFunctionNeuralNetwork* FAnimNode_PFNN::PFNN = nullptr;
 
-FAnimNode_PFNN::FAnimNode_PFNN(): Trajectory(nullptr), PFNNAnimInstance(nullptr), bIsPFNNLoaded(false)
+FAnimNode_PFNN::FAnimNode_PFNN(): Trajectory(nullptr), PFNNAnimInstance(nullptr), FrameCounter(0), bIsPFNNLoaded(false)
 {
 }
 
@@ -285,6 +287,11 @@ void FAnimNode_PFNN::ApplyPFNN()
 		const glm::quat Rotation = JointRotations[i];
 		FinalBoneRotations[i] = FQuat(Rotation.x, Rotation.z, Rotation.y, Rotation.w);
 	}
+
+	FrameCounter++;
+
+	Trajectory->LogTrajectoryData(FrameCounter);
+	LogNetworkData(FrameCounter);
 }
 
 glm::quat FAnimNode_PFNN::QuaternionExpression(const glm::vec3 arg_Length)
@@ -300,9 +307,9 @@ glm::quat FAnimNode_PFNN::QuaternionExpression(const glm::vec3 arg_Length)
 	return Quat / sqrtf(Quat.w*Quat.w + Quat.x*Quat.x + Quat.y*Quat.y + Quat.z*Quat.z);
 }
 
-UPFNNAnimInstance * FAnimNode_PFNN::GetPFNNInstanceFromContext(const FAnimationInitializeContext& Context)
+UPFNNAnimInstance * FAnimNode_PFNN::GetPFNNInstanceFromContext(const FAnimationInitializeContext& arg_Context)
 {
-	FAnimInstanceProxy* AnimProxy = Context.AnimInstanceProxy;
+	FAnimInstanceProxy* AnimProxy = arg_Context.AnimInstanceProxy;
 	if (AnimProxy)
 	{
 		return Cast<UPFNNAnimInstance>(AnimProxy->GetAnimInstanceObject());
@@ -310,9 +317,9 @@ UPFNNAnimInstance * FAnimNode_PFNN::GetPFNNInstanceFromContext(const FAnimationI
 	return nullptr;
 }
 
-UPFNNAnimInstance * FAnimNode_PFNN::GetPFNNInstanceFromContext(const FAnimationUpdateContext & Context)
+UPFNNAnimInstance * FAnimNode_PFNN::GetPFNNInstanceFromContext(const FAnimationUpdateContext & arg_Context)
 {
-	FAnimInstanceProxy* AnimProxy = Context.AnimInstanceProxy;
+	FAnimInstanceProxy* AnimProxy = arg_Context.AnimInstanceProxy;
 	if (AnimProxy)
 	{
 		return Cast<UPFNNAnimInstance>(AnimProxy->GetAnimInstanceObject());
@@ -320,29 +327,29 @@ UPFNNAnimInstance * FAnimNode_PFNN::GetPFNNInstanceFromContext(const FAnimationU
 	return nullptr;
 }
 
-void FAnimNode_PFNN::Initialize_AnyThread(const FAnimationInitializeContext& Context)
+void FAnimNode_PFNN::Initialize_AnyThread(const FAnimationInitializeContext& arg_Context)
 {
-	FAnimNode_Base::Initialize_AnyThread(Context);
+	FAnimNode_Base::Initialize_AnyThread(arg_Context);
 	
-	EvaluateGraphExposedInputs.Execute(Context);
+	EvaluateGraphExposedInputs.Execute(arg_Context);
 
-	PFNNAnimInstance = GetPFNNInstanceFromContext(Context);
+	PFNNAnimInstance = GetPFNNInstanceFromContext(arg_Context);
 	if (!PFNNAnimInstance) 
 	{
 		UE_LOG(LogTemp, Error, TEXT("PFNN Animation node should only be added to a PFNNAnimInstance child class!"));
 	}
 }
 
-void FAnimNode_PFNN::Update_AnyThread(const FAnimationUpdateContext& Context)
+void FAnimNode_PFNN::Update_AnyThread(const FAnimationUpdateContext& arg_Context)
 {
-	FAnimNode_Base::Update_AnyThread(Context);
+	FAnimNode_Base::Update_AnyThread(arg_Context);
 
 	if (!bIsPFNNLoaded) 
 	{
 		LoadData();
 	}
 
-	EvaluateGraphExposedInputs.Execute(Context);
+	EvaluateGraphExposedInputs.Execute(arg_Context);
 
 	if (PFNNAnimInstance) 
 	{
@@ -353,24 +360,102 @@ void FAnimNode_PFNN::Update_AnyThread(const FAnimationUpdateContext& Context)
 		ApplyPFNN();
 }
 
-void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& Output)
+void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 {
-	const FTransform& CharacterTransform = Output.AnimInstanceProxy->GetActorTransform();
+	const FTransform& CharacterTransform = arg_Output.AnimInstanceProxy->GetActorTransform();
 	if (FinalBoneLocations.Num() >= JOINT_NUM && FinalBoneRotations.Num() >= JOINT_NUM) 
 	{
 		for (int32 i = 0; i < JOINT_NUM; i++)
 		{
 			const FCompactPoseBoneIndex RootBoneIndex(i);
 
-			Output.Pose[RootBoneIndex].SetLocation(FinalBoneLocations[i]);
-			Output.Pose[RootBoneIndex].SetRotation(FinalBoneRotations[i]);
+			arg_Output.Pose[RootBoneIndex].SetLocation(FinalBoneLocations[i]);
+			arg_Output.Pose[RootBoneIndex].SetRotation(FinalBoneRotations[i]);
 
-			Output.AnimInstanceProxy->AnimDrawDebugSphere(Output.Pose[RootBoneIndex].GetLocation() + CharacterTransform.GetLocation(), 2.5f, 12, FColor::Green, false, -1.0f);
+			arg_Output.AnimInstanceProxy->AnimDrawDebugSphere(arg_Output.Pose[RootBoneIndex].GetLocation() + CharacterTransform.GetLocation(), 2.5f, 12, FColor::Green, false, -1.0f);
 		}
-		Output.Pose.NormalizeRotations();
+		arg_Output.Pose.NormalizeRotations();
 	}
 	else 
 	{
 		UE_LOG(PFNN_Logging, Error, TEXT("PFNN results were not properly applied!"));
 	}
+}
+
+void FAnimNode_PFNN::LogNetworkData(int arg_FrameCounter) 
+{
+	try 
+	{
+		std::fstream fs;
+		fs.open("UE4_Network.log", std::ios::out);
+
+		if (fs.is_open()) 
+		{
+			fs << "Network Frame[" << arg_FrameCounter << "]" << std::endl << std::endl;
+			
+			fs << "Current Phase: " << Phase << std::endl << std::endl;
+
+			fs << "Joints" << std::endl;
+			for (size_t i = 0; i < JOINT_NUM; i++)
+			{
+				fs << "Joint[" << i << "]" << std::endl;
+				fs << "	JointPosition: " << JointPosition[i].x << "X, " << JointPosition[i].y << "Y, " << JointPosition[i].z << "Z" << std::endl;
+				fs << "	JointVelocitys: " << JointVelocitys[i].x << "X, " << JointVelocitys[i].y << "Y, " << JointVelocitys[i].z << "Z" << std::endl;
+
+				for (size_t x = 0; x < 3; x++)
+				{
+					fs << "	JointRotations:  " << JointRotations[i][x].x << "X, " << JointRotations[i][x].y << ", " << JointRotations[i][x].z << std::endl;
+				}
+
+				for (size_t x = 0; x < 3; x++)
+				{
+					fs << "	JointAnimXform:  " << JointAnimXform[i][x].x << "X, " << JointAnimXform[i][x].y << ", " << JointAnimXform[i][x].z << std::endl;
+				}
+
+				for (size_t x = 0; x < 3; x++)
+				{
+					fs << "	JointRestXform:  " << JointRestXform[i][x].x << "X, " << JointRestXform[i][x].y << ", " << JointRestXform[i][x].z << std::endl;
+				}
+
+				for (size_t x = 0; x < 3; x++)
+				{
+					fs << "	JointMeshXform:  " << JointMeshXform[i][x].x << "X, " << JointMeshXform[i][x].y << ", " << JointMeshXform[i][x].z << std::endl;
+				}
+
+				for (size_t x = 0; x < 3; x++)
+				{
+					fs << "	JointGlobalRestXform:  " << JointGlobalRestXform[i][x].x << "X, " << JointGlobalRestXform[i][x].y << ", " << JointGlobalRestXform[i][x].z << std::endl;
+				}
+
+				for (size_t x = 0; x < 3; x++)
+				{
+					fs << "	JointGlobalAnimXform:  " << JointGlobalAnimXform[i][x].x << "X, " << JointGlobalAnimXform[i][x].y << ", " << JointGlobalAnimXform[i][x].z << std::endl;
+				}
+
+				fs << "JoinParents: " << JointParents[i] << std::endl;
+			}
+			fs << "End Joints" << std::endl << std::endl;
+
+			fs << "FinalLocations" << std::endl;
+			for (size_t i = 0; i < FinalBoneLocations.Num(); i++)
+			{
+				fs << "Bone[" << i << "]" << std::endl;
+				fs << "	FinalBoneLocation: " << FinalBoneLocations[i].X << "X, " << FinalBoneLocations[i].Y << "Y, " << FinalBoneLocations[i].Z << "Z" << std::endl;
+				fs << "	FinalBoneRotation: " << FinalBoneRotations[i].X << "X, " << FinalBoneRotations[i].Y << "Y, " << FinalBoneRotations[i].Z << "Z, " << FinalBoneRotations[i].W << "W"<< std::endl;
+			}
+			fs << "End FinalLocations" << std::endl;
+
+		}
+		else 
+		{
+			throw std::exception();
+		}
+	}
+	catch (std::exception e) 
+	{
+#ifdef WITH_EDITOR
+		UE_LOG(LogTemp, Log, TEXT("Failed to log network data"));
+#endif
+	}
+	
 }

@@ -9,6 +9,8 @@
 #include <ThirdParty/glm/ext/quaternion_common.inl>
 #include <ThirdParty/glm/detail/type_quat.hpp>
 
+#include <fstream>
+
 #if !UE_BUILD_SHIPPING //Debug functions are excluded from the shipping build
 #include "DrawDebugHelpers.h"
 #include "Engine/Engine.h"
@@ -237,6 +239,78 @@ glm::vec3 UTrajectoryComponent::MixDirections(const glm::vec3 arg_XDirection, co
 	return ZQuat * glm::vec3(0, 1, 0);
 }
 
+
+//USES NATIVE CPP TO ENSURE IT CAN BE USED IN REFERENCE PROJECT
+void UTrajectoryComponent::LogTrajectoryData(int arg_FrameCount)
+{
+	try 
+	{
+		std::ofstream fs;
+		fs.open("UE4_Trajectory.log", std::ios::out);
+
+		if (fs.is_open()) 
+		{
+			
+			fs << "TrajectoryLog Frame[" << arg_FrameCount << "]" << std::endl << std::endl;
+
+			fs << "#Basic Variables" << std::endl;
+			fs << "TargetDirection: " << TargetDirection.x << "X, " << TargetDirection.y << "Y, " << TargetDirection.z << "Z" << std::endl;
+			fs << "TargetVelocity:  " << TargetVelocity.x << "X, " << TargetVelocity.y << "Y, " << TargetVelocity.z << "Z" << std::endl;
+			fs << "Width:           " << Width << std::endl;
+			fs << "StrafeAmount:    " << StrafeAmount << std::endl;
+			fs << "StrafeTarget:    " << StrafeTarget << std::endl;
+			fs << "Responsive:      " << Responsive << std::endl;
+			fs << "#End Basic Variables" << std::endl << std::endl;
+
+			fs << "#Extra Smoothing values" << std::endl;
+			fs << "	ExtraVelocitySmooth:	" << ExtraVelocitySmooth << std::endl;
+			fs << "	ExtraDirectionSmooth:   " << ExtraDirectionSmooth << std::endl;
+			fs << "	ExtraStrafeVelocity:	" << ExtraStrafeVelocity << std::endl;
+			fs << "	ExtraStrafeSmooth:      " << ExtraStrafeSmooth << std::endl;
+			fs << "	ExtraGaitSmooth:        " << ExtraGaitSmooth << std::endl;
+			fs << "	ExtraJointSmooth:       " << ExtraJointSmooth << std::endl;
+			fs << "#End Extra Smoothing values" << std::endl << std::endl;
+
+			fs << "#Positional Data" << std::endl;
+			for (size_t i = 0; i < LENGTH; i++)
+			{
+				fs << "TrajectoryNode[" << i << "]" << std::endl;
+				fs << " Position:  " << Positions[i].x << "X, " << Positions[i].y << "Y, " << Positions[i].z << "Z" << std::endl;
+				fs << "	Direction: " << Directions[i].x << "X, " << Directions[i].y << "Y, " << Directions[i].z << "Z" << std::endl;
+				for (size_t x = 0; x < 3; x++)
+				{
+				fs << "	Rotation:  " << Rotations[i][x].x << "X, " << Rotations[i][x].y << ", " << Rotations[i][x].z << std::endl;
+				}
+			}
+			fs << "#End Positional Data" << std::endl << std::endl;
+
+			fs << "#Gaits" << std::endl;
+			for (size_t i = 0; i < LENGTH; i++)
+			{
+				fs << "Gait[" << i << "]" << std::endl;
+				fs << "	GaitStand: " << GaitStand[i] << std::endl;
+				fs << "	GaitWalk:  " << GaitWalk[i] << std::endl;
+				fs << "	GaitJog:   " << GaitJog[i] << std::endl;
+				fs << "	GaitJump:  " << GaitJump[i] << std::endl;
+				fs << "	GaitBump:  " << GaitBump[i] << std::endl;
+			}
+			fs << "#End Gaits" << std::endl << std::endl;
+		}
+		else 
+		{
+			throw std::exception();
+		}
+		fs.close();
+		return;
+	}
+	catch (std::exception e) 
+	{
+#ifdef WITH_EDITOR
+		UE_LOG(LogTemp, Error, TEXT("Failed to Log Trajectory output data"));
+#endif
+	}
+}
+
 #if !UE_BUILD_SHIPPING //Debug functions are excluded from the shipping build
 void UTrajectoryComponent::DrawDebugTrajectory()
 {
@@ -324,7 +398,6 @@ void UTrajectoryComponent::DrawDebugTrajectory()
 		DrawDebugLine(GetWorld(), FVector(Forward.x, Forward.y, Forward.z), UArrow0, PointColor, false, -1, 0, 1);
 		DrawDebugLine(GetWorld(), FVector(Forward.x, Forward.y, Forward.z), UArrow1, PointColor, false, -1, 0, 1);
 		DrawDebugLine(GetWorld(), FVector(Base.x, Base.y, Base.z), FVector(Forward.x, Forward.y, Forward.z), PointColor, false, -1, 0, 1);
-
 
 	}
 }
