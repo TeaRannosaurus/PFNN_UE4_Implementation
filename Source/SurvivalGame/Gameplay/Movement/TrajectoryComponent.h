@@ -73,6 +73,8 @@ public:
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* arg_ThisTickFunction) override;
 
+	void LogTrajectoryData(int arg_FrameCount);
+
 protected:
 	virtual void BeginPlay() override;
 
