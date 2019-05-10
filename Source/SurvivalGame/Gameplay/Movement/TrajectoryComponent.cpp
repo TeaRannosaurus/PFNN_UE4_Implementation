@@ -21,7 +21,7 @@ UTrajectoryComponent::UTrajectoryComponent(): ExtraStrafeSmooth(0), ExtraGaitSmo
 	PrimaryComponentTick.bCanEverTick = true;
 
 	Width = 25.0f;
-	TargetDirection = glm::vec3(0);
+	TargetDirection = glm::vec3(0,0,1);
 	ExtraVelocitySmooth	= 0.9f;
 	ExtraStrafeVelocity	= 0.9f;
 	ExtraDirectionSmooth= 0.9f;
@@ -37,8 +37,8 @@ UTrajectoryComponent::UTrajectoryComponent(): ExtraStrafeSmooth(0), ExtraGaitSmo
 	for (int i = 0; i < LENGTH; i++)
 	{
 		Positions[i] = glm::vec3(0, 0, 0);
-		Rotations[i] = glm::mat4(0);
-		Directions[i] = glm::vec3(0, 1, 0);
+		Rotations[i] = glm::mat4(1);
+		Directions[i] = glm::vec3(0, 0, 1);
 		Heights[i]	= 0.0f;
 		GaitJog[i]	= 0.0f;
 		GaitWalk[i] = 0.0f;
@@ -52,7 +52,7 @@ UTrajectoryComponent::UTrajectoryComponent(): ExtraStrafeSmooth(0), ExtraGaitSmo
 	OwnerPawn = nullptr;
 
 #if WITH_EDITORONLY_DATA
-	bShowDebugInformation = false;
+	bShowDebugInformation = true;
 #endif
 }
 
@@ -67,6 +67,8 @@ void UTrajectoryComponent::BeginPlay()
 
 	OwnerPawn = Cast<APawn>(GetOwner());
 	IsValid(OwnerPawn);
+
+	tickcounter = 0;
 }
 
 glm::vec3 UTrajectoryComponent::GetRootPosition() const
@@ -82,8 +84,8 @@ glm::vec3 UTrajectoryComponent::GetPreviousRootPosition() const
 {
 	return glm::vec3(
 		Positions[LENGTH / 2 - 1].x,
-		Positions[LENGTH / 2 - 1].y,
-		Heights[LENGTH / 2 - 1]
+		Heights[LENGTH / 2 - 1],
+		Positions[LENGTH / 2 - 1].z
 	);
 }
 
@@ -100,31 +102,6 @@ glm::mat3 UTrajectoryComponent::GetPreviousRootRotation() const
 void UTrajectoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	if (glm::abs(CurrentFrameInput.x) + glm::abs(CurrentFrameInput.y) < 0.305f)
-	{
-		CurrentFrameInput = glm::vec2(0);
-	}
-
-	glm::vec3 TrajectoryTargetDirectionNew = glm::normalize(glm::vec3(GetOwner()->GetActorForwardVector().X, GetOwner()->GetActorForwardVector().Y, 0.0f));
-	const glm::mat3 TrajectoryTargetRotation = glm::mat3(glm::rotate(atan2f(
-		TrajectoryTargetDirectionNew.y,
-		TrajectoryTargetDirectionNew.x), glm::vec3(0, 0, 1)));
-	
-	float TargetVelocitySpeed = OwnerPawn->GetVelocity().SizeSquared() / (OwnerPawn->GetMovementComponent()->GetMaxSpeed() * OwnerPawn->GetMovementComponent()->GetMaxSpeed()) * 7.5f; //7.5 is current training walking speed
-	const glm::vec3 TrajectoryTargetVelocityNew = TargetVelocitySpeed * (TrajectoryTargetRotation * glm::vec3(1, 0, 0));
-	TargetVelocity = glm::mix(TargetVelocity, TrajectoryTargetVelocityNew, ExtraVelocitySmooth);
-
-	StrafeAmount = glm::mix(StrafeAmount, StrafeTarget, ExtraStrafeSmooth);
-	const glm::vec3 TrajectoryTargetVelocityDirection = glm::length(TargetVelocity) < 1e-05 ? TargetDirection : glm::normalize(TargetVelocity);
-	TrajectoryTargetDirectionNew = MixDirections(TrajectoryTargetVelocityDirection, TrajectoryTargetDirectionNew, StrafeAmount);
-	TargetDirection = MixDirections(TargetDirection, TrajectoryTargetDirectionNew, ExtraDirectionSmooth);
-	//TargetDirection = TrajectoryTargetVelocityDirection;
-
-	TickGaits();
-	PredictFutureTrajectory(DeltaTime);
-	TickRotations();
-	TickHeights();
 
 #if WITH_EDITORONLY_DATA
 	if (bShowDebugInformation)
@@ -171,10 +148,10 @@ void UTrajectoryComponent::TickGaits()
 	}
 }
 
-void UTrajectoryComponent::PredictFutureTrajectory(const float DeltaSeconds)
+void UTrajectoryComponent::PredictFutureTrajectory()
 {
 	//Predicting future trajectory
-	glm::vec3 TrajectoryPositionsBlend[LENGTH];
+	glm::vec3 TrajectoryPositionsBlend[LENGTH] = { glm::vec3(0) };
 	TrajectoryPositionsBlend[LENGTH / 2] = Positions[LENGTH / 2];
 
 	for (int i = LENGTH / 2 + 1; i < LENGTH; i++)
@@ -185,11 +162,11 @@ void UTrajectoryComponent::PredictFutureTrajectory(const float DeltaSeconds)
 		const float ScalePosition = (1.0f - powf(1.0f - (static_cast<float>(i - LENGTH / 2) / (LENGTH / 2)), BiasPosition));
 		const float ScaleDirection = (1.0f - powf(1.0f - (static_cast<float>(i - LENGTH / 2) / (LENGTH / 2)), BiasDirection));
 
-		TrajectoryPositionsBlend[i] = glm::mix(Positions[i] - Positions[i - 1], TargetVelocity * DeltaSeconds, ScalePosition);
+		TrajectoryPositionsBlend[i] = glm::mix(Positions[i] - Positions[i - 1], TargetVelocity, ScalePosition);
 
 		//TODO: Add wall colision for future trajectory - 1519
 
-		Directions[i] = glm::mix(Directions[i], TargetDirection, ScaleDirection);
+		Directions[i] = MixDirections(Directions[i], TargetDirection, ScaleDirection);
 
 		//Heights[i]	= Heights[LENGTH / 2];
 		Heights[i] = 0; //Debug can be removed
@@ -213,7 +190,7 @@ void UTrajectoryComponent::TickRotations()
 {
 	for (int i = 0; i < LENGTH; i++)
 	{
-		Rotations[i] = glm::mat3(glm::rotate(atan2f(Directions[i].y, Directions[i].x), glm::vec3(0, 0, 1)));
+		Rotations[i] = glm::mat3(glm::rotate(atan2f(Directions[i].x, Directions[i].z), glm::vec3(0, 1, 0)));
 	}
 }
 
@@ -262,8 +239,8 @@ void UTrajectoryComponent::UpdatePastTrajectory()
 glm::vec3 UTrajectoryComponent::MixDirections(const glm::vec3 arg_XDirection, const glm::vec3 arg_YDirection,
 	const float arg_Scalar)
 {
-	const glm::quat XQuat = glm::angleAxis(atan2f(arg_XDirection.y, arg_XDirection.x), glm::vec3(0, 0, 1));
-	const glm::quat YQuat = glm::angleAxis(atan2f(arg_YDirection.y, arg_YDirection.x), glm::vec3(0, 0, 1));
+	const glm::quat XQuat = glm::angleAxis(atan2f(arg_XDirection.x, arg_XDirection.y), glm::vec3(0, 0, 1));
+	const glm::quat YQuat = glm::angleAxis(atan2f(arg_YDirection.x, arg_YDirection.y), glm::vec3(0, 0, 1));
 	const glm::quat ZQuat = glm::slerp(XQuat, YQuat, arg_Scalar);
 	return ZQuat * glm::vec3(0, 1, 0);
 }
@@ -279,7 +256,7 @@ void UTrajectoryComponent::LogTrajectoryData(int arg_FrameCount)
 
 		if (fs.is_open()) 
 		{
-			
+			fs << "UE4_Implementation" << std::endl;
 			fs << "TrajectoryLog Frame[" << arg_FrameCount << "]" << std::endl << std::endl;
 
 			fs << "#Basic Variables" << std::endl;
@@ -340,6 +317,34 @@ void UTrajectoryComponent::LogTrajectoryData(int arg_FrameCount)
 	}
 }
 
+void UTrajectoryComponent::TickTrajectory()
+{
+	if (glm::abs(CurrentFrameInput.x) + glm::abs(CurrentFrameInput.y) < 0.305f)
+	{
+		CurrentFrameInput = glm::vec2(0);
+	}
+
+	glm::vec3 TrajectoryTargetDirectionNew = glm::normalize(glm::vec3(GetOwner()->GetActorForwardVector().X, 0.0f, GetOwner()->GetActorForwardVector().Y));
+	const glm::mat3 TrajectoryTargetRotation = glm::mat3(glm::rotate(atan2f(
+		TrajectoryTargetDirectionNew.x,
+		TrajectoryTargetDirectionNew.y), glm::vec3(0, 1, 0)));
+
+	float TargetVelocitySpeed = OwnerPawn->GetVelocity().SizeSquared() / (OwnerPawn->GetMovementComponent()->GetMaxSpeed() * OwnerPawn->GetMovementComponent()->GetMaxSpeed()) * 7.5f; //7.5 is current training walking speed
+	const glm::vec3 TrajectoryTargetVelocityNew = TargetVelocitySpeed * (TrajectoryTargetRotation * glm::vec3(0, 0, 0));
+	TargetVelocity = glm::mix(TargetVelocity, TrajectoryTargetVelocityNew, ExtraVelocitySmooth);
+
+	StrafeAmount = glm::mix(StrafeAmount, StrafeTarget, ExtraStrafeSmooth);
+	const glm::vec3 TrajectoryTargetVelocityDirection = glm::length(TargetVelocity) < 1e-05 ? TargetDirection : glm::normalize(TargetVelocity);
+	TrajectoryTargetDirectionNew = MixDirections(TrajectoryTargetVelocityDirection, TrajectoryTargetDirectionNew, StrafeAmount);
+	TargetDirection = MixDirections(TargetDirection, TrajectoryTargetDirectionNew, ExtraDirectionSmooth);
+	//TargetDirection = TrajectoryTargetVelocityDirection;
+
+	TickGaits();
+	PredictFutureTrajectory();
+	TickRotations();
+	TickHeights();
+}
+
 #if !UE_BUILD_SHIPPING //Debug functions are excluded from the shipping build
 void UTrajectoryComponent::DrawDebugTrajectory()
 {
@@ -370,7 +375,7 @@ void UTrajectoryComponent::DrawDebugTrajectory()
 		//const auto UPointPoisiton = FVector(ScaleBetween(PointPosition.x, 0.0f, 7.5f) * 600.0f, ScaleBetween(PointPosition.y, 0.0f, 7.5f) * 600.0f + PointOffset, ScaleBetween(PointPosition.z, 0.0f, 7.5f) * 600.0f);
 		const auto UPointPoisiton = FVector(PointPosition.x, PointPosition.y, PointOffset);
 
-		DrawDebugPoint(GetWorld(), UPointPoisiton, MinorPointSize, PointColor, false, 0.03f);
+		DrawDebugPoint(GetWorld(), UPointPoisiton + GetOwner()->GetActorLocation(), MinorPointSize, PointColor, false, 0.03f);
 	}
 
 	for (int i = 0; i < LENGTH; i += 10) //Show major points
@@ -381,7 +386,7 @@ void UTrajectoryComponent::DrawDebugTrajectory()
 		//const auto UPointPoisiton = FVector(ScaleBetween(PointPosition.x, 0.0f, 7.5f) * 600.0f, ScaleBetween(PointPosition.y, 0.0f, 7.5f) * 600.0f + PointOffset, ScaleBetween(PointPosition.z, 0.0f, 7.5f) * 600.0f);
 		const auto UPointPoisiton = FVector(PointPosition.x, PointPosition.y, PointOffset);
 
-		DrawDebugPoint(GetWorld(), UPointPoisiton, MajorPointSize, PointColor, false, 0.03f);
+		DrawDebugPoint(GetWorld(), UPointPoisiton + GetOwner()->GetActorLocation(), MajorPointSize, PointColor, false, 0.03f);
 	}
 
 	for (int i = 0; i < LENGTH; i += 10) //Show major hieghts
@@ -391,8 +396,8 @@ void UTrajectoryComponent::DrawDebugTrajectory()
 		const auto PointColor = FColor(GaitStand[i] * 255, GaitJog[i] * 255, GaitWalk[i] * 255);
 
 
-		DrawDebugPoint(GetWorld(), FVector(PointPositionRight.x, PointPositionRight.y, PointPositionRight.z + PointOffset), MinorPointSize, PointColor, false, 0.03f);
-		DrawDebugPoint(GetWorld(), FVector(PointPositionLeft.x, PointPositionLeft.y, PointPositionLeft.z + PointOffset), MinorPointSize, PointColor, false, 0.03f);
+		DrawDebugPoint(GetWorld(), FVector(PointPositionRight.x, PointPositionRight.y, PointPositionRight.z + PointOffset) + GetOwner()->GetActorLocation(), MinorPointSize, PointColor, false, 0.03f);
+		DrawDebugPoint(GetWorld(), FVector(PointPositionLeft.x, PointPositionLeft.y, PointPositionLeft.z + PointOffset) + GetOwner()->GetActorLocation(), MinorPointSize, PointColor, false, 0.03f);
 	}
 
 	for (int i = 0; i < LENGTH; i += 10) //Draw arrows
@@ -424,9 +429,9 @@ void UTrajectoryComponent::DrawDebugTrajectory()
 		//const auto UArrow1 = FVector(Arrow1.x, Arrow1.y, Arrow1.z);
 		const auto UArrow1 = FVector(Arrow1.x, Arrow1.y, 0);
 
-		DrawDebugLine(GetWorld(), FVector(Forward.x, Forward.y, Forward.z), UArrow0, PointColor, false, -1, 0, 1);
-		DrawDebugLine(GetWorld(), FVector(Forward.x, Forward.y, Forward.z), UArrow1, PointColor, false, -1, 0, 1);
-		DrawDebugLine(GetWorld(), FVector(Base.x, Base.y, Base.z), FVector(Forward.x, Forward.y, Forward.z), PointColor, false, -1, 0, 1);
+		DrawDebugLine(GetWorld(), FVector(Forward.x, Forward.y, Forward.z) + GetOwner()->GetActorLocation(), UArrow0 + GetOwner()->GetActorLocation(), PointColor, false, -1, 0, 1);
+		DrawDebugLine(GetWorld(), FVector(Forward.x, Forward.y, Forward.z) + GetOwner()->GetActorLocation(), UArrow1 + GetOwner()->GetActorLocation(), PointColor, false, -1, 0, 1);
+		DrawDebugLine(GetWorld(), FVector(Base.x, Base.y, Base.z) + GetOwner()->GetActorLocation(), FVector(Forward.x, Forward.y, Forward.z) + GetOwner()->GetActorLocation(), PointColor, false, -1, 0, 1);
 
 	}
 }

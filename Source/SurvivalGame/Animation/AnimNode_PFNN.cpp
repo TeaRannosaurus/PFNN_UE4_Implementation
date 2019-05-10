@@ -75,6 +75,9 @@ void FAnimNode_PFNN::LoadPFNN()
 
 void FAnimNode_PFNN::ApplyPFNN()
 {
+
+	Trajectory->TickTrajectory();
+
 	auto RootPosition = Trajectory->GetRootPosition();
 	auto RootRotation = Trajectory->GetRootRotation();
 
@@ -82,12 +85,12 @@ void FAnimNode_PFNN::ApplyPFNN()
 	for (int i = 0; i < UTrajectoryComponent::LENGTH; i += 10)
 	{
 		int w = UTrajectoryComponent::LENGTH / 10;
-		const glm::vec3 Position = glm::inverse((RootRotation)) * (Trajectory->Positions[i] - RootPosition);
-		const glm::vec3 Direction = glm::inverse((RootRotation)) * Trajectory->Directions[i];
+		const glm::vec3 Position = glm::inverse(RootRotation) * (Trajectory->Positions[i] - RootPosition);
+		const glm::vec3 Direction = glm::inverse(RootRotation) * Trajectory->Directions[i];
 		PFNN->Xp((w * 0) + i / 10) = Position.x;
-		PFNN->Xp((w * 1) + i / 10) = Position.y;
+		PFNN->Xp((w * 1) + i / 10) = Position.z;
 		PFNN->Xp((w * 2) + i / 10) = Direction.x;
-		PFNN->Xp((w * 3) + i / 10) = Direction.y;
+		PFNN->Xp((w * 3) + i / 10) = Direction.z;
 	}
 
 	// Input trajectory gaits
@@ -108,16 +111,16 @@ void FAnimNode_PFNN::ApplyPFNN()
 
 	for (int i = 0; i < JOINT_NUM; i++)
 	{
-		const int o = (((UTrajectoryComponent::LENGTH) / 10)*10);
+		const int o = ((UTrajectoryComponent::LENGTH / 10)*10);
 		const glm::vec3 Position = glm::inverse(PreviousRootRotation) * (JointPosition[i] - PreviousRootPosition);
 		const glm::vec3 Previous = glm::inverse(PreviousRootRotation) * JointVelocitys[i];
 		//Magical numbers are indexes for the PFNN
 		PFNN->Xp(o + (JOINT_NUM * 3 * 0) + i * 3 + 0) = Position.x;
-		PFNN->Xp(o + (JOINT_NUM * 3 * 0) + i * 3 + 1) = Position.z;
-		PFNN->Xp(o + (JOINT_NUM * 3 * 0) + i * 3 + 2) = Position.y;
+		PFNN->Xp(o + (JOINT_NUM * 3 * 0) + i * 3 + 1) = Position.y;
+		PFNN->Xp(o + (JOINT_NUM * 3 * 0) + i * 3 + 2) = Position.z;
 		PFNN->Xp(o + (JOINT_NUM * 3 * 1) + i * 3 + 0) = Previous.x;
-		PFNN->Xp(o + (JOINT_NUM * 3 * 1) + i * 3 + 1) = Previous.z;
-		PFNN->Xp(o + (JOINT_NUM * 3 * 1) + i * 3 + 2) = Previous.y;
+		PFNN->Xp(o + (JOINT_NUM * 3 * 1) + i * 3 + 1) = Previous.y;
+		PFNN->Xp(o + (JOINT_NUM * 3 * 1) + i * 3 + 2) = Previous.z;
 	}
 
 	//Input heights for the trajectory
@@ -145,11 +148,12 @@ void FAnimNode_PFNN::ApplyPFNN()
 		Trajectory->GetOwner()->GetWorld()->LineTraceSingleByChannel(HitResultLeft, UPositionRight, -FVector::UpVector * DistanceLenght, ECC_Pawn, TraceParams);
 
 		//TODO: Add height addition
-		PFNN->Xp(o + (w * 0) + i / 10) = /*HitResultRight.Location.Z*/ 0 - RootPosition.z;
-		PFNN->Xp(o + (w * 1) + i / 10) = Trajectory->Positions[i].z; /*- RootPosition.z*/
-		PFNN->Xp(o + (w * 2) + i / 10) = /*HitResultLeft.Location.Z-*/ 0 - RootPosition.z;
+		PFNN->Xp(o + (w * 0) + (i / 10)) = 0;/*HitResultRight.Location.Z*/ //0 - RootPosition.y;
+		PFNN->Xp(o + (w * 1) + (i / 10)) = Trajectory->Positions[i].y; /*- RootPosition.z*/
+		PFNN->Xp(o + (w * 2) + (i / 10)) = 0;/*HitResultLeft.Location.Z-*/ //0 - RootPosition.y;
 	}
-
+	
+	Phase = 0;
 	//Preform regression
 	PFNN->Predict(Phase);
 
@@ -160,13 +164,11 @@ void FAnimNode_PFNN::ApplyPFNN()
 		const int OVelocity = 8 + (((UTrajectoryComponent::LENGTH / 2) / 10) * 4) + JOINT_NUM * 3 * 1;
 		const int ORoation = 8 + (((UTrajectoryComponent::LENGTH / 2) / 10) * 4) + JOINT_NUM * 3 * 2;
 
-		//Flipped Y and Z
-		const glm::vec3 Position = RootRotation * glm::vec3(PFNN->Yp(OPosition + i * 3 + 0), PFNN->Yp(OPosition + i * 3 + 2), PFNN->Yp(OPosition + i * 3 + 1)) + RootPosition;
-		const glm::vec3 Velocity = RootRotation * glm::vec3(PFNN->Yp(OVelocity + i * 3 + 0), PFNN->Yp(OVelocity + i * 3 + 2), PFNN->Yp(OVelocity + i * 3 + 1));
-		const glm::mat3 Rotation = RootRotation * glm::toMat3(QuaternionExpression(glm::vec3(PFNN->Yp(ORoation + i * 3 + 0), PFNN->Yp(ORoation + i * 3 + 2), PFNN->Yp(ORoation + i * 3 + 1))));
+		const glm::vec3 Position = (RootRotation * glm::vec3(PFNN->Yp(OPosition + i * 3 + 0), PFNN->Yp(OPosition + i * 3 + 1), PFNN->Yp(OPosition + i * 3 + 2))) + RootPosition;
+		const glm::vec3 Velocity = (RootRotation * glm::vec3(PFNN->Yp(OVelocity + i * 3 + 0), PFNN->Yp(OVelocity + i * 3 + 1), PFNN->Yp(OVelocity + i * 3 + 2)));
+		const glm::mat3 Rotation = (RootRotation * glm::toMat3(QuaternionExpression(glm::vec3(PFNN->Yp(ORoation + i * 3 + 0), PFNN->Yp(ORoation + i * 3 + 1), PFNN->Yp(ORoation + i * 3 + 2)))));
 
-		//TODO: 0.8f should be replaced by ExtraJointSmooth
-		JointPosition[i] = glm::mix(JointPosition[i] + Velocity, Position, 0.8f);
+		JointPosition[i] = glm::mix(JointPosition[i] + Velocity, Position, Trajectory->ExtraJointSmooth);
 		JointVelocitys[i] = Velocity;
 		JointRotations[i] = Rotation;
 
@@ -204,50 +206,38 @@ void FAnimNode_PFNN::ApplyPFNN()
 		JointMeshXform[i] = JointGlobalAnimXform[i] * glm::inverse(JointGlobalRestXform[i]);
 	}
 
-	//Update past trajectory
-	for (int i = 0; i < UTrajectoryComponent::LENGTH / 2; i++)
-	{
-		Trajectory->Positions[i] = Trajectory->Positions[i + 1];
-		Trajectory->Directions[i] = Trajectory->Directions[i + 1];
-		Trajectory->Rotations[i] = Trajectory->Rotations[i + 1];
-		Trajectory->Heights[i] = Trajectory->Heights[i + 1];
-		Trajectory->GaitStand[i] = Trajectory->GaitStand[i + 1];
-		Trajectory->GaitWalk[i] = Trajectory->GaitWalk[i + 1];
-		Trajectory->GaitJog[i] = Trajectory->GaitJog[i + 1];
-		Trajectory->GaitBump[i] = Trajectory->GaitBump[i + 1];
-	}
+	Trajectory->UpdatePastTrajectory();
 
 	//Update current trajectory
 	float StandAmount = powf(1.0f - Trajectory->GaitStand[UTrajectoryComponent::LENGTH / 2], 0.25f);
 
-	const glm::vec3 TrajectoryUpdate = Trajectory->Rotations[UTrajectoryComponent::LENGTH / 2] * glm::vec3(PFNN->Yp(0), PFNN->Yp(1), 0.0f); //TODEBUG: Rot
+	const glm::vec3 TrajectoryUpdate = Trajectory->Rotations[UTrajectoryComponent::LENGTH / 2] * glm::vec3(PFNN->Yp(0), 0, PFNN->Yp(1)); //TODEBUG: Rot
 	Trajectory->Positions[UTrajectoryComponent::LENGTH / 2] = Trajectory->Positions[UTrajectoryComponent::LENGTH / 2] + StandAmount * TrajectoryUpdate;
-	Trajectory->Directions[UTrajectoryComponent::LENGTH / 2] = glm::mat3(glm::rotate(StandAmount * -PFNN->Yp(2), glm::vec3(0, 0, 1))) * Trajectory->Directions[UTrajectoryComponent::LENGTH / 2]; //TODEBUG: Rot
-	Trajectory->Rotations[UTrajectoryComponent::LENGTH / 2] = glm::mat3(glm::rotate(glm::atan(
-		Trajectory->Directions[UTrajectoryComponent::LENGTH / 2].y,
-		Trajectory->Directions[UTrajectoryComponent::LENGTH / 2].x), glm::vec3(0, 0, 1)));
+	Trajectory->Directions[UTrajectoryComponent::LENGTH / 2] = glm::mat3(glm::rotate(StandAmount * -PFNN->Yp(2), glm::vec3(0, 1, 0))) * Trajectory->Directions[UTrajectoryComponent::LENGTH / 2]; //TODEBUG: Rot
+	Trajectory->Rotations[UTrajectoryComponent::LENGTH / 2] = glm::mat3(glm::rotate(atan2f(
+		Trajectory->Directions[UTrajectoryComponent::LENGTH / 2].x,
+		Trajectory->Directions[UTrajectoryComponent::LENGTH / 2].z), glm::vec3(0, 1, 0)));
 
 	//TODO: Add wall logic
 
 	//Update future trajectory
 	for (int i = UTrajectoryComponent::LENGTH / 2 + 1; i < UTrajectoryComponent::LENGTH; i++)
 	{
-		//int i = UTrajectoryComponent::LENGTH - 1;
 		const int W = (UTrajectoryComponent::LENGTH / 2) / 10;
-		const float M = fmod((static_cast<float>(i) - (UTrajectoryComponent::LENGTH / 2)) / 10, 1.0f);
+		const float M = fmod((static_cast<float>(i) - (UTrajectoryComponent::LENGTH / 2)) / 10.0, 1.0);
 		//Trajectory->Positions[i].x = (glm::normalize(TrajectoryTargetDirectionNew).x);
 		//Trajectory->Positions[i].y = (glm::normalize(TrajectoryTargetDirectionNew).y);
 		//Trajectory->Directions[i].x = TrajectoryTargetDirectionNew.x;
 		//Trajectory->Directions[i].y = TrajectoryTargetDirectionNew.y;
 
-		Trajectory->Positions[i].x = (1 - M) * PFNN->Yp(8 + (W * 0) + (i / 10) - W) + M * PFNN->Yp(8 + (W * 0) + (i / 10) - W + 1); //TODEBUG: Rot
-		Trajectory->Positions[i].y = (1 - M) * PFNN->Yp(8 + (W * 1) + (i / 10) - W) + M * PFNN->Yp(8 + (W * 1) + (i / 10) - W + 1); //TODEBUG: Rot
-		Trajectory->Directions[i].x = (1 - M) * PFNN->Yp(8 + (W * 2) + (i / 10) - W) + M * PFNN->Yp(8 + (W * 2) + (i / 10) - W + 1); //TODEBUG: Rot
-		Trajectory->Directions[i].y = (1 - M) * PFNN->Yp(8 + (W * 3) + (i / 10) - W) + M * PFNN->Yp(8 + (W * 3) + (i / 10) - W + 1); //TODEBUG: Rot
+		Trajectory->Positions[i].x = (1 - M) * PFNN->Yp(8 + (W * 0) + (i / 10) - W) + M * PFNN->Yp(8 + (W * 0) + (i / 10) - W + 1); 
+		Trajectory->Positions[i].z = (1 - M) * PFNN->Yp(8 + (W * 1) + (i / 10) - W) + M * PFNN->Yp(8 + (W * 1) + (i / 10) - W + 1); 
+		Trajectory->Directions[i].x = (1 - M) * PFNN->Yp(8 + (W * 2) + (i / 10) - W) + M * PFNN->Yp(8 + (W * 2) + (i / 10) - W + 1);
+		Trajectory->Directions[i].z = (1 - M) * PFNN->Yp(8 + (W * 3) + (i / 10) - W) + M * PFNN->Yp(8 + (W * 3) + (i / 10) - W + 1);
 
 		Trajectory->Positions[i] = (Trajectory->Rotations[UTrajectoryComponent::LENGTH / 2] * Trajectory->Positions[i]) + Trajectory->Positions[UTrajectoryComponent::LENGTH / 2];
 		Trajectory->Directions[i] = glm::normalize((Trajectory->Rotations[UTrajectoryComponent::LENGTH / 2] * Trajectory->Directions[i]));
-		Trajectory->Rotations[i] = glm::mat3(glm::rotate(atan2f(Trajectory->Directions[i].y, Trajectory->Directions[i].x), glm::vec3(0, 0, 1)));
+		Trajectory->Rotations[i] = glm::mat3(glm::rotate(atan2f(Trajectory->Directions[i].x, Trajectory->Directions[i].z), glm::vec3(0, 1, 0)));
 	}
 
 
@@ -271,14 +261,18 @@ void FAnimNode_PFNN::ApplyPFNN()
 		const glm::quat Rotation = JointRotations[i];
 		FinalBoneRotations[i] = FQuat(Rotation.x, Rotation.z, Rotation.y, Rotation.w);
 	}
-
+	
 	//Phase update
-	Phase = fmod(Phase + (StandAmount * 0.9f + 0.1f) * 2.0f * PI * PFNN->Yp(3), 2.0f * PI);
+//	Phase = fmod(Phase + (StandAmount * 0.9f + 0.1f) * 2.0f * PI * PFNN->Yp(3), 2.0f * PI);
 
 	FrameCounter++;
+	if (FrameCounter == 1)
+	{
+		Trajectory->LogTrajectoryData(FrameCounter);
+		LogNetworkData(FrameCounter);
+	}
 
-	Trajectory->LogTrajectoryData(FrameCounter);
-	LogNetworkData(FrameCounter);
+
 }
 
 glm::quat FAnimNode_PFNN::QuaternionExpression(const glm::vec3 arg_Length)
@@ -352,14 +346,25 @@ void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 	const FTransform& CharacterTransform = arg_Output.AnimInstanceProxy->GetActorTransform();
 	if (FinalBoneLocations.Num() >= JOINT_NUM && FinalBoneRotations.Num() >= JOINT_NUM) 
 	{
+		auto Bones = arg_Output.Pose.GetBoneContainer();
+		auto Skeleton = Bones.GetReferenceSkeleton();
+
 		for (int32 i = 0; i < JOINT_NUM; i++)
 		{
 			const FCompactPoseBoneIndex RootBoneIndex(i);
 
-			arg_Output.Pose[RootBoneIndex].SetLocation(FinalBoneLocations[i] * 0.01f);
-			arg_Output.Pose[RootBoneIndex].SetRotation(FinalBoneRotations[i]);
+			const FCompactPoseBoneIndex ParentBoneIndex(Bones.GetParentBoneIndex(RootBoneIndex));
 
-			arg_Output.AnimInstanceProxy->AnimDrawDebugSphere(arg_Output.Pose[RootBoneIndex].GetLocation() + CharacterTransform.GetLocation(), 2.5f, 12, FColor::Green, false, -1.0f);
+			arg_Output.Pose[RootBoneIndex].SetLocation(FinalBoneLocations[i]);		
+			arg_Output.Pose[RootBoneIndex].SetRotation(FinalBoneRotations[i]);
+			
+			arg_Output.AnimInstanceProxy->AnimDrawDebugSphere(arg_Output.Pose[RootBoneIndex].GetLocation(), 2.5f, 12, FColor::Green, false, -1.0f);
+			
+			if (ParentBoneIndex != -1) 
+			{
+				arg_Output.AnimInstanceProxy->AnimDrawDebugLine(arg_Output.Pose[RootBoneIndex].GetLocation(), arg_Output.Pose[ParentBoneIndex].GetLocation(), FColor::Blue,false,-1,5.0f);
+			}
+
 		}
 		arg_Output.Pose.NormalizeRotations();
 	}
@@ -378,6 +383,7 @@ void FAnimNode_PFNN::LogNetworkData(int arg_FrameCounter)
 
 		if (fs.is_open()) 
 		{
+			fs << "UE4_Network" << std::endl;
 			fs << "Network Frame[" << arg_FrameCounter << "]" << std::endl << std::endl;
 			
 			fs << "Current Phase: " << Phase << std::endl << std::endl;

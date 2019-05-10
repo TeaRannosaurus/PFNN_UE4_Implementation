@@ -12,6 +12,54 @@
 
 #include "AnimNode_PFNN.generated.h"
 
+	//Bone definitions
+enum
+{
+	//Root
+	JOINT_ROOT = 0,
+
+	//Left leg
+	JOINT_ROOT_L = 1,
+	JOINT_HIP_L = 2,
+	JOINT_KNEE_L = 3,
+	JOINT_HEEL_L = 4,
+	JOINT_TOE_L = 5,
+
+	//Right leg
+	JOINT_ROOT_R = 6,
+	JOINT_HIP_R = 7,
+	JOINT_KNEE_R = 8,
+	JOINT_HEEL_R = 9,
+	JOINT_TOE_R = 10,
+
+	//Back to head
+	JOINT_BACK = 11,
+	JOINT_SPINE_1 = 12,
+	JOINT_SPINE_2 = 13,
+	JOINT_NECK = 14,
+	JOINT_NECK1 = 15,
+	JOINT_HEAD = 16,
+
+	//Right arm
+	JOINT_SHOULDER_L = 17,
+	JOINT_ARM_L = 18,
+	JOINT_FOREARM_L = 19,
+	JOINT_HAND_L = 20,
+	JOINT_FINGER_L = 21,
+	JOINT_INDEX_L = 22,
+	JOINT_THUMB_L = 23,
+
+	//Left arm
+	JOINT_SHOULDER_R = 24,
+	JOINT_ARM_R = 25,
+	JOINT_FOREARM_R = 26,
+	JOINT_HAND_R = 27,
+	JOINT_FINGER_R = 28,
+	JOINT_INDEX_R = 29,
+	JOINT_THUMB_R = 30,
+};
+
+
 
 class UTrajectoryComponent;
 class UPhaseFunctionNeuralNetwork;

@@ -33,6 +33,8 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = BaseValues)
 	float Responsive;
 
+	int tickcounter;
+
 	//Extra smoothing values
 	UPROPERTY(EditAnywhere, Category = ExtraSmoothing)
 	float ExtraVelocitySmooth;
@@ -46,6 +48,7 @@ public:
 	float ExtraGaitSmooth;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = ExtraSmoothing)
 	float ExtraJointSmooth;
+
 
 	//Positional data
 	glm::vec3 Positions[LENGTH];
@@ -74,6 +77,14 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* arg_ThisTickFunction) override;
 
 	void LogTrajectoryData(int arg_FrameCount);
+	
+	void TickTrajectory();
+
+	void UpdatePastTrajectory();
+	void TickGaits();
+	void PredictFutureTrajectory();
+	void TickRotations();
+	void TickHeights();
 
 protected:
 	virtual void BeginPlay() override;
@@ -86,11 +97,8 @@ private:
 
 	glm::vec2 CurrentFrameInput;
 
-	void TickGaits();
-	void PredictFutureTrajectory(const float DeltaSeconds);
-	void TickRotations();
-	void TickHeights();
-	void UpdatePastTrajectory();
+
+
 
 	/*
 	* @Description Returnes a liniar bled between the X and Y vector direction by using the floating point scalar
