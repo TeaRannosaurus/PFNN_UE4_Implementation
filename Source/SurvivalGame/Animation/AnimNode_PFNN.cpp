@@ -15,7 +15,8 @@
 
 UPhaseFunctionNeuralNetwork* FAnimNode_PFNN::PFNN = nullptr;
 
-FAnimNode_PFNN::FAnimNode_PFNN(): Trajectory(nullptr), PFNNAnimInstance(nullptr), FrameCounter(0), bIsPFNNLoaded(false)
+FAnimNode_PFNN::FAnimNode_PFNN(): Trajectory(nullptr), Phase(0), PFNNAnimInstance(nullptr), FrameCounter(0),
+                                  bIsPFNNLoaded(false)
 {
 }
 
@@ -153,7 +154,7 @@ void FAnimNode_PFNN::ApplyPFNN()
 		PFNN->Xp(o + (w * 2) + (i / 10)) = 0;/*HitResultLeft.Location.Z-*/ //0 - RootPosition.y;
 	}
 	
-	Phase = 0;
+	//Phase = 0;
 	//Preform regression
 	PFNN->Predict(Phase);
 
@@ -263,7 +264,7 @@ void FAnimNode_PFNN::ApplyPFNN()
 	}
 	
 	//Phase update
-//	Phase = fmod(Phase + (StandAmount * 0.9f + 0.1f) * 2.0f * PI * PFNN->Yp(3), 2.0f * PI);
+	Phase = fmod(Phase + (StandAmount * 0.9f + 0.1f) * 2.0f * PI * PFNN->Yp(3), 2.0f * PI);
 
 	FrameCounter++;
 	if (FrameCounter == 1)

@@ -319,6 +319,8 @@ void UTrajectoryComponent::LogTrajectoryData(int arg_FrameCount)
 
 void UTrajectoryComponent::TickTrajectory()
 {
+
+	//ASK TIM TO SEND CODE
 	if (glm::abs(CurrentFrameInput.x) + glm::abs(CurrentFrameInput.y) < 0.305f)
 	{
 		CurrentFrameInput = glm::vec2(0);
@@ -330,7 +332,7 @@ void UTrajectoryComponent::TickTrajectory()
 		TrajectoryTargetDirectionNew.y), glm::vec3(0, 1, 0)));
 
 	float TargetVelocitySpeed = OwnerPawn->GetVelocity().SizeSquared() / (OwnerPawn->GetMovementComponent()->GetMaxSpeed() * OwnerPawn->GetMovementComponent()->GetMaxSpeed()) * 7.5f; //7.5 is current training walking speed
-	const glm::vec3 TrajectoryTargetVelocityNew = TargetVelocitySpeed * (TrajectoryTargetRotation * glm::vec3(0, 0, 0));
+	const glm::vec3 TrajectoryTargetVelocityNew = TargetVelocitySpeed * (TrajectoryTargetRotation * glm::vec3(CurrentFrameInput.x, 0, CurrentFrameInput.y));
 	TargetVelocity = glm::mix(TargetVelocity, TrajectoryTargetVelocityNew, ExtraVelocitySmooth);
 
 	StrafeAmount = glm::mix(StrafeAmount, StrafeTarget, ExtraStrafeSmooth);
