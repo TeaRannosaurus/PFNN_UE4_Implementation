@@ -359,15 +359,13 @@ void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 			arg_Output.Pose[RootBoneIndex].SetLocation(FinalBoneLocations[i]);		
 			arg_Output.Pose[RootBoneIndex].SetRotation(FinalBoneRotations[i]);
 			
-			arg_Output.AnimInstanceProxy->AnimDrawDebugSphere(arg_Output.Pose[RootBoneIndex].GetLocation(), 2.5f, 12, FColor::Green, false, -1.0f);
-			
+			arg_Output.AnimInstanceProxy->AnimDrawDebugSphere(arg_Output.Pose[RootBoneIndex].GetLocation() + CharacterTransform.GetLocation(), 2.5f, 12, FColor::Green, false, -1.0f);
 			if (ParentBoneIndex != -1) 
 			{
-				arg_Output.AnimInstanceProxy->AnimDrawDebugLine(arg_Output.Pose[RootBoneIndex].GetLocation(), arg_Output.Pose[ParentBoneIndex].GetLocation(), FColor::Blue,false,-1,5.0f);
+				arg_Output.AnimInstanceProxy->AnimDrawDebugLine(arg_Output.Pose[RootBoneIndex].GetLocation() + CharacterTransform.GetLocation(), arg_Output.Pose[ParentBoneIndex].GetLocation() + CharacterTransform.GetLocation(), FColor::White,false,-1,5.0f);
 			}
 
 		}
-		arg_Output.Pose.NormalizeRotations();
 	}
 	else 
 	{
