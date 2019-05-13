@@ -153,7 +153,6 @@ void FAnimNode_PFNN::ApplyPFNN()
 		PFNN->Xp(o + (w * 2) + (i / 10)) = 0;/*HitResultLeft.Location.Z-*/ //0 - RootPosition.y;
 	}
 	
-	Phase = 0;
 	//Preform regression
 	PFNN->Predict(Phase);
 
@@ -263,7 +262,7 @@ void FAnimNode_PFNN::ApplyPFNN()
 	}
 	
 	//Phase update
-//	Phase = fmod(Phase + (StandAmount * 0.9f + 0.1f) * 2.0f * PI * PFNN->Yp(3), 2.0f * PI);
+	Phase = fmod(Phase + (StandAmount * 0.9f + 0.1f) * 2.0f * PI * PFNN->Yp(3), 2.0f * PI);
 
 	FrameCounter++;
 	if (FrameCounter == 1)
@@ -358,15 +357,13 @@ void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 			arg_Output.Pose[RootBoneIndex].SetLocation(FinalBoneLocations[i]);		
 			arg_Output.Pose[RootBoneIndex].SetRotation(FinalBoneRotations[i]);
 			
-			arg_Output.AnimInstanceProxy->AnimDrawDebugSphere(arg_Output.Pose[RootBoneIndex].GetLocation(), 2.5f, 12, FColor::Green, false, -1.0f);
-			
+			arg_Output.AnimInstanceProxy->AnimDrawDebugSphere(arg_Output.Pose[RootBoneIndex].GetLocation() + CharacterTransform.GetLocation(), 2.5f, 12, FColor::Green, false, -1.0f);
 			if (ParentBoneIndex != -1) 
 			{
-				arg_Output.AnimInstanceProxy->AnimDrawDebugLine(arg_Output.Pose[RootBoneIndex].GetLocation(), arg_Output.Pose[ParentBoneIndex].GetLocation(), FColor::Blue,false,-1,5.0f);
+				arg_Output.AnimInstanceProxy->AnimDrawDebugLine(arg_Output.Pose[RootBoneIndex].GetLocation() + CharacterTransform.GetLocation(), arg_Output.Pose[ParentBoneIndex].GetLocation() + CharacterTransform.GetLocation(), FColor::White,false,-1,5.0f);
 			}
 
 		}
-		arg_Output.Pose.NormalizeRotations();
 	}
 	else 
 	{
