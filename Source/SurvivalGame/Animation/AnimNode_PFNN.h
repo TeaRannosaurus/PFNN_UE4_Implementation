@@ -109,6 +109,7 @@ struct SURVIVALGAME_API FAnimNode_PFNN : public FAnimNode_Base
 
 	void LogNetworkData(int arg_FrameCounter);
 
+
 	//Amount of joints
 	enum
 	{

@@ -84,8 +84,8 @@ glm::vec3 UTrajectoryComponent::GetPreviousRootPosition() const
 {
 	return glm::vec3(
 		Positions[LENGTH / 2 - 1].x,
-		Heights[LENGTH / 2 - 1],
-		Positions[LENGTH / 2 - 1].z
+		Positions[LENGTH / 2 - 1].y,
+		Heights[LENGTH / 2 - 1]
 	);
 }
 
