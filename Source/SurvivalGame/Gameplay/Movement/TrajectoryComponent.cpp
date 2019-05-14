@@ -334,12 +334,15 @@ void UTrajectoryComponent::TickTrajectory()
 		CurrentFrameInput = glm::vec2(0);
 	}
 
+	CurrentFrameInput = glm::normalize(CurrentFrameInput);
+
 	glm::vec3 TrajectoryTargetDirectionNew = glm::normalize(glm::vec3(GetOwner()->GetActorForwardVector().X, 0.0f, GetOwner()->GetActorForwardVector().Y));
 	const glm::mat3 TrajectoryTargetRotation = glm::mat3(glm::rotate(atan2f(
 		TrajectoryTargetDirectionNew.x,
-		TrajectoryTargetDirectionNew.y), glm::vec3(0, 1, 0)));
+		TrajectoryTargetDirectionNew.z), glm::vec3(0, 1, 0)));
 
 	float TargetVelocitySpeed = OwnerPawn->GetVelocity().SizeSquared() / (OwnerPawn->GetMovementComponent()->GetMaxSpeed() * OwnerPawn->GetMovementComponent()->GetMaxSpeed()) * 7.5f; //7.5 is current training walking speed
+
 	const glm::vec3 TrajectoryTargetVelocityNew = TargetVelocitySpeed * (TrajectoryTargetRotation * glm::vec3(CurrentFrameInput.x, 0, CurrentFrameInput.y));
 	TargetVelocity = glm::mix(TargetVelocity, TrajectoryTargetVelocityNew, ExtraVelocitySmooth);
 
