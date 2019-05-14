@@ -147,4 +147,7 @@ struct SURVIVALGAME_API FAnimNode_PFNN : public FAnimNode_Base
 
 	bool bIsPFNNLoaded;
 
+private:
+	void VisualizePhase();
+
 };
