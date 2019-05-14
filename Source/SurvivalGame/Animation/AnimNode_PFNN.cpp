@@ -7,6 +7,7 @@
 #include "AnimInstanceProxy.h"
 #include "MachineLearning/PhaseFunctionNeuralNetwork.h"
 #include "PlatformFilemanager.h"
+#include "DrawDebugHelpers.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <ThirdParty/glm/gtx/transform.inl>
@@ -340,6 +341,8 @@ void FAnimNode_PFNN::Update_AnyThread(const FAnimationUpdateContext& arg_Context
 	
 	if(Trajectory != nullptr && bIsPFNNLoaded)
 		ApplyPFNN();
+
+
 }
 
 void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
@@ -357,13 +360,14 @@ void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 			const FCompactPoseBoneIndex ParentBoneIndex(Bones.GetParentBoneIndex(RootBoneIndex));
 			if (ParentBoneIndex.GetInt() == -1) 
 			{
-				arg_Output.Pose[RootBoneIndex].SetLocation(FinalBoneLocations[i]);
 				arg_Output.Pose[RootBoneIndex].SetRotation(FinalBoneRotations[i]);
+				arg_Output.Pose[RootBoneIndex].SetLocation(FinalBoneLocations[i]);
+				arg_Output.Pose[RootBoneIndex].NormalizeRotation();
 			}
 			else 
 			{
-				arg_Output.Pose[RootBoneIndex].SetLocation(FinalBoneLocations[i] - FinalBoneLocations[ParentBoneIndex.GetInt()]);
 				arg_Output.Pose[RootBoneIndex].SetRotation(FinalBoneRotations[i]);
+				arg_Output.Pose[RootBoneIndex].SetLocation(FinalBoneLocations[i] - FinalBoneLocations[ParentBoneIndex.GetInt()]);
 				arg_Output.Pose[RootBoneIndex].NormalizeRotation();
 			}
 			arg_Output.AnimInstanceProxy->AnimDrawDebugSphere(FinalBoneLocations[i] + CharacterTransform.GetLocation(), 2.5f, 12, FColor::Green, false, -1.0f);
@@ -379,6 +383,8 @@ void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 	{
 		UE_LOG(PFNN_Logging, Error, TEXT("PFNN results were not properly applied!"));
 	}
+
+	DrawDebugBoneVelocity(arg_Output);
 }
 
 void FAnimNode_PFNN::LogNetworkData(int arg_FrameCounter) 
@@ -458,6 +464,27 @@ void FAnimNode_PFNN::LogNetworkData(int arg_FrameCounter)
 #endif
 	}
 	
+}
+
+void FAnimNode_PFNN::DrawDebugBoneVelocity(const FPoseContext& arg_Context)
+{
+	if(!GEngine)
+		return;
+	
+	for(int32 i = 0; i < JOINT_NUM; i++)
+	{
+		auto JointPos = FVector(JointPosition[i].x, JointPosition[i].z, JointPosition[i].y);
+
+		arg_Context.AnimInstanceProxy->AnimDrawDebugLine(
+			JointPos,
+			JointPos - 10 * FVector(JointVelocitys[i].x, JointVelocitys[i].z, JointVelocitys[i].y),
+			FColor::Red, 
+			false,
+			-1, 
+			0.5f
+		);
+		
+	}
 }
 
 void FAnimNode_PFNN::VisualizePhase()
