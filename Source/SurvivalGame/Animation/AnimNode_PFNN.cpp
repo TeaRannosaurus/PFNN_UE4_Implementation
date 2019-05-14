@@ -240,7 +240,6 @@ void FAnimNode_PFNN::ApplyPFNN()
 		Trajectory->Rotations[i] = glm::mat3(glm::rotate(atan2f(Trajectory->Directions[i].x, Trajectory->Directions[i].z), glm::vec3(0, 1, 0)));
 	}
 
-
 	FinalBoneLocations.Empty();
 	FinalBoneRotations.Empty();
 
@@ -258,7 +257,7 @@ void FAnimNode_PFNN::ApplyPFNN()
 		UMatrix.M[0][2] = JointMeshXform[i][0][2];	UMatrix.M[1][2] = JointMeshXform[i][1][2];	UMatrix.M[2][2] = JointMeshXform[i][2][2];	UMatrix.M[3][2] = JointMeshXform[i][3][2];
 		UMatrix.M[0][3] = 0;						UMatrix.M[1][3] = 0;						UMatrix.M[2][3] = 0;						UMatrix.M[3][3] = 1;
 
-		const glm::quat Rotation = JointRotations[i];
+		const glm::quat Rotation = glm::quat_cast(JointRotations[i]);
 		glm::vec3 eulerRotations = glm::eulerAngles(Rotation);
 		FinalBoneRotations[i] = FQuat(FQuat::MakeFromEuler(FVector(eulerRotations.x, eulerRotations.z, eulerRotations.y)));
 	}
