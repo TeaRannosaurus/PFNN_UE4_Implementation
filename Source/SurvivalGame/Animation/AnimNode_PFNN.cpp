@@ -12,11 +12,12 @@
 #include <ThirdParty/glm/gtx/transform.inl>
 
 #include <fstream>
+#include "Engine/Engine.h"
 
 UPhaseFunctionNeuralNetwork* FAnimNode_PFNN::PFNN = nullptr;
 
 FAnimNode_PFNN::FAnimNode_PFNN(): Trajectory(nullptr), Phase(0), PFNNAnimInstance(nullptr), FrameCounter(0),
-                                  bIsPFNNLoaded(false)
+								  bIsPFNNLoaded(false)
 {
 }
 
@@ -272,6 +273,7 @@ void FAnimNode_PFNN::ApplyPFNN()
 		LogNetworkData(FrameCounter);
 	}
 
+	VisualizePhase();
 
 }
 
@@ -457,4 +459,10 @@ void FAnimNode_PFNN::LogNetworkData(int arg_FrameCounter)
 #endif
 	}
 	
+}
+
+void FAnimNode_PFNN::VisualizePhase()
+{
+	if(GEngine)
+		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Yellow, FString::Printf(TEXT("Phase is %f"), Phase));
 }
