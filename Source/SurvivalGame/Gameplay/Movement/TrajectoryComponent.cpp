@@ -364,13 +364,13 @@ void UTrajectoryComponent::DrawDebugTrajectory()
 	const float MinorPointSize = 5.0f;
 	const float PointOffset = 2.0f;
 
-	const auto StartingPoint = Positions[0];		//Get the leading point of the trajectory
-	const auto MidPoint = Positions[LENGTH / 2];	//Get the mid point/player point of the trajectory
-	const auto EndingPoint = Positions[LENGTH - 1];	//Get the ending point of the trajectory
+	const auto StartingPoint = Positions[0] * 100.0f;			//Get the leading point of the trajectory
+	const auto MidPoint = Positions[LENGTH / 2] * 100.0f;		//Get the mid point/player point of the trajectory
+	const auto EndingPoint = Positions[LENGTH - 1] * 100.0f;	//Get the ending point of the trajectory
 
 	for (size_t i = 0; i < LENGTH; i++)
 	{
-			FVector DebugLocation = FVector(Positions[i].x, Positions[i].z, Positions[i].y) + GetOwner()->GetActorLocation();
+			FVector DebugLocation = (FVector(Positions[i].x, Positions[i].z, Positions[i].y) * 100.0f) + GetOwner()->GetActorLocation();
 			DrawDebugPoint(GetWorld(), DebugLocation, 4.0f,FColor::Red);
 
 			FVector Ue4Direction = FVector(Directions[i].x, Directions[i].z, Directions[i].y) * 10.0f;
