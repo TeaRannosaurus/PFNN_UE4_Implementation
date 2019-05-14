@@ -108,7 +108,7 @@ void FAnimNode_PFNN::ApplyPFNN()
 
 	//Input previous join position / velocity / rotations
 	const glm::vec3 PreviousRootPosition = Trajectory->GetPreviousRootPosition();
-	const glm::mat3 PreviousRootRotation = Trajectory->GetRootRotation();
+	const glm::mat3 PreviousRootRotation = Trajectory->GetPreviousRootRotation();
 
 	for (int i = 0; i < JOINT_NUM; i++)
 	{
@@ -142,16 +142,16 @@ void FAnimNode_PFNN::ApplyPFNN()
 		FHitResult HitResultLeft(ForceInit);
 		FHitResult HitResultRight(ForceInit);
 
-		const FVector UPositionRight = FVector(PositionRight.x, PositionRight.y, PositionRight.z);
-		const FVector UPositionLeft = FVector(PositionLeft.x, PositionLeft.y, PositionLeft.z);
+		const FVector UPositionRight = FVector(PositionRight.x, PositionRight.z, PositionRight.y);
+		const FVector UPositionLeft = FVector(PositionLeft.x, PositionLeft.z, PositionLeft.y);
 
 		Trajectory->GetOwner()->GetWorld()->LineTraceSingleByChannel(HitResultRight, UPositionLeft, -FVector::UpVector * DistanceLenght, ECC_Pawn, TraceParams);
 		Trajectory->GetOwner()->GetWorld()->LineTraceSingleByChannel(HitResultLeft, UPositionRight, -FVector::UpVector * DistanceLenght, ECC_Pawn, TraceParams);
 
 		//TODO: Add height addition
-		PFNN->Xp(o + (w * 0) + (i / 10)) = 0;/*HitResultRight.Location.Z*/ //0 - RootPosition.y;
-		PFNN->Xp(o + (w * 1) + (i / 10)) = Trajectory->Positions[i].y; /*- RootPosition.z*/
-		PFNN->Xp(o + (w * 2) + (i / 10)) = 0;/*HitResultLeft.Location.Z-*/ //0 - RootPosition.y;
+		PFNN->Xp(o + (w * 0) + (i / 10)) = 0 - RootPosition.y;
+		PFNN->Xp(o + (w * 1) + (i / 10)) = Trajectory->Positions[i].y - RootPosition.y;
+		PFNN->Xp(o + (w * 2) + (i / 10)) = 0 - RootPosition.y;
 	}
 	
 	//Phase = 0;
@@ -208,6 +208,8 @@ void FAnimNode_PFNN::ApplyPFNN()
 	}
 
 	Trajectory->UpdatePastTrajectory();
+
+	Trajectory->Positions[UTrajectoryComponent::LENGTH / 2] = RootPosition;
 
 	//Update current trajectory
 	float StandAmount = powf(1.0f - Trajectory->GaitStand[UTrajectoryComponent::LENGTH / 2], 0.25f);

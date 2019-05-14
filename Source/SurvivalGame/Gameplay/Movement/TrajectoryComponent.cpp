@@ -36,6 +36,7 @@ UTrajectoryComponent::UTrajectoryComponent(): ExtraStrafeSmooth(0), ExtraGaitSmo
 	StrafeAmount= 0.0f;
 	Responsive	= 0.0f;
 
+	TargetVelocity = glm::vec3();
 
 	for (int i = 0; i < LENGTH; i++)
 	{
@@ -78,8 +79,8 @@ glm::vec3 UTrajectoryComponent::GetRootPosition() const
 {
 	return glm::vec3(
 		GetOwner()->GetActorLocation().X * 0.01f,
-		GetOwner()->GetActorLocation().Y * 0.01f,
-		Heights[LENGTH / 2] * 0.01f
+		Heights[LENGTH / 2],
+		GetOwner()->GetActorLocation().Y * 0.01f
 	);
 }
 
@@ -87,8 +88,8 @@ glm::vec3 UTrajectoryComponent::GetPreviousRootPosition() const
 {
 	return glm::vec3(
 		Positions[LENGTH / 2 - 1].x,
-		Positions[LENGTH / 2 - 1].y,
-		Heights[LENGTH / 2 - 1]
+		Heights[LENGTH / 2 - 1],
+		Positions[LENGTH / 2 - 1].z
 	);
 }
 
@@ -165,14 +166,13 @@ void UTrajectoryComponent::PredictFutureTrajectory()
 		const float ScalePosition = (1.0f - powf(1.0f - (static_cast<float>(i - LENGTH / 2) / (LENGTH / 2)), BiasPosition));
 		const float ScaleDirection = (1.0f - powf(1.0f - (static_cast<float>(i - LENGTH / 2) / (LENGTH / 2)), BiasDirection));
 
-		TrajectoryPositionsBlend[i] = glm::mix(Positions[i] - Positions[i - 1], TargetVelocity, ScalePosition);
+		TrajectoryPositionsBlend[i] = TrajectoryPositionsBlend[i-1] + glm::mix(Positions[i] - Positions[i - 1], TargetVelocity, ScalePosition);
 
 		//TODO: Add wall colision for future trajectory - 1519
 
 		Directions[i] = MixDirections(Directions[i], TargetDirection, ScaleDirection);
 
-		//Heights[i]	= Heights[LENGTH / 2];
-		Heights[i] = 0; //Debug can be removed
+		Heights[i] = Heights[LENGTH / 2];
 
 		GaitStand[i]= GaitStand[LENGTH / 2];
 		GaitWalk[i] = GaitWalk[LENGTH / 2];
@@ -183,7 +183,7 @@ void UTrajectoryComponent::PredictFutureTrajectory()
 
 	for (int i = LENGTH / 2 + 1; i < LENGTH; i++)
 	{
-		Positions[i] += TargetVelocity * TrajectoryPositionsBlend[i];
+		Positions[i] = TrajectoryPositionsBlend[i];
 	}
 
 
@@ -212,15 +212,14 @@ void UTrajectoryComponent::TickHeights()
 		GetWorld()->LineTraceSingleByChannel(HitResult, GetOwner()->GetActorLocation(), -FVector::UpVector * DistanceLenght, ECC_Pawn, TraceParams);
 
 
-		Positions[i].z = HitResult.Location.Z;
-		Positions[i].z = 0; //DEBUG: removable
+		Positions[i].y = HitResult.Location.Z;
+		Positions[i].y = 0; //DEBUG: removable
 	}
 
-	const int TrajectoryPointStepSize = 10;
 	Heights[LENGTH / 2] = 0.0f;
-	for (int i = 0; i < LENGTH; i += TrajectoryPointStepSize)
+	for (int i = 0; i < LENGTH; i += 10)
 	{
-		Heights[LENGTH / 2] += Positions[i].z / (LENGTH / TrajectoryPointStepSize);
+		Heights[LENGTH / 2] += (Positions[i].y / ((LENGTH) / 10));
 	}
 }
 
@@ -327,14 +326,13 @@ void UTrajectoryComponent::TickTrajectory()
 	{
 		auto MovementComponent = BaseCharacter->GetMovementComponent();
 		CurrentFrameInput = glm::vec2(MovementComponent->Velocity.X*0.01f, MovementComponent->Velocity.Y*0.01f);
+		CurrentFrameInput = glm::normalize(CurrentFrameInput);
 	}
 
 	if (glm::abs(CurrentFrameInput.x) + glm::abs(CurrentFrameInput.y) < 0.305f)
 	{
 		CurrentFrameInput = glm::vec2(0);
 	}
-
-	CurrentFrameInput = glm::normalize(CurrentFrameInput);
 
 	glm::vec3 TrajectoryTargetDirectionNew = glm::normalize(glm::vec3(GetOwner()->GetActorForwardVector().X, 0.0f, GetOwner()->GetActorForwardVector().Y));
 	const glm::mat3 TrajectoryTargetRotation = glm::mat3(glm::rotate(atan2f(
