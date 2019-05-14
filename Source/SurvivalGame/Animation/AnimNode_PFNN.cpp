@@ -352,17 +352,25 @@ void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 			const FCompactPoseBoneIndex RootBoneIndex(i);
 
 			const FCompactPoseBoneIndex ParentBoneIndex(Bones.GetParentBoneIndex(RootBoneIndex));
-
-			arg_Output.Pose[RootBoneIndex].SetLocation(FinalBoneLocations[i]);		
-			arg_Output.Pose[RootBoneIndex].SetRotation(FinalBoneRotations[i]);
-			
-			arg_Output.AnimInstanceProxy->AnimDrawDebugSphere(arg_Output.Pose[RootBoneIndex].GetLocation() + CharacterTransform.GetLocation(), 2.5f, 12, FColor::Green, false, -1.0f);
+			if (ParentBoneIndex.GetInt() == -1) 
+			{
+				arg_Output.Pose[RootBoneIndex].SetLocation(FinalBoneLocations[i]);
+				arg_Output.Pose[RootBoneIndex].SetRotation(FinalBoneRotations[i]);
+			}
+			else 
+			{
+				arg_Output.Pose[RootBoneIndex].SetLocation(FinalBoneLocations[i] - FinalBoneLocations[ParentBoneIndex.GetInt()]);
+				arg_Output.Pose[RootBoneIndex].SetRotation(FinalBoneRotations[i]);
+				arg_Output.Pose[RootBoneIndex].NormalizeRotation();
+			}
+			arg_Output.AnimInstanceProxy->AnimDrawDebugSphere(FinalBoneLocations[i] + CharacterTransform.GetLocation(), 2.5f, 12, FColor::Green, false, -1.0f);
 			if (ParentBoneIndex != -1) 
 			{
-				arg_Output.AnimInstanceProxy->AnimDrawDebugLine(arg_Output.Pose[RootBoneIndex].GetLocation() + CharacterTransform.GetLocation(), arg_Output.Pose[ParentBoneIndex].GetLocation() + CharacterTransform.GetLocation(), FColor::White,false,-1,5.0f);
+				arg_Output.AnimInstanceProxy->AnimDrawDebugLine(FinalBoneLocations[i] + CharacterTransform.GetLocation(), FinalBoneLocations[ParentBoneIndex.GetInt()] + CharacterTransform.GetLocation(), FColor::White,false,-1,5.0f);
 			}
 
 		}
+
 	}
 	else 
 	{
