@@ -367,21 +367,25 @@ void UTrajectoryComponent::DrawDebugTrajectory()
 
 	for (size_t i = 0; i < LENGTH; i++)
 	{
-		if (i > 0) 
-		{
-			FVector Start = FVector(Positions[i].x, Positions[i].y, Positions[i].z) + GetOwner()->GetActorLocation();
-			FVector End = FVector(Positions[i - 1].x, Positions[i - 1].y, Positions[i - 1].z) + GetOwner()->GetActorLocation();
-			DrawDebugLine(GetWorld(),Start, End, FColor::Red, false, -1, 0.0f, 2.0f);
-		}
+			FVector DebugLocation = FVector(Positions[i].x, Positions[i].z, Positions[i].y) + GetOwner()->GetActorLocation();
+			DrawDebugPoint(GetWorld(), DebugLocation, 4.0f,FColor::Red);
+
+			FVector Ue4Direction = FVector(Directions[i].x, Directions[i].z, Directions[i].y) * 10.0f;
+			FVector DirectionLocation = DebugLocation + Ue4Direction;
+			DrawDebugLine(GetWorld(), DebugLocation, DirectionLocation, FColor::Black, false, -1.0f, 0, 0.2f);
 	}
 
-	FVector DebugStartingPoint = FVector(StartingPoint.x, StartingPoint.y, StartingPoint.z) + GetOwner()->GetActorLocation();
-	FVector DebugMidPoint = FVector(MidPoint.x, MidPoint.y, MidPoint.z) + GetOwner()->GetActorLocation();
-	FVector DebugEndPoint = FVector(EndingPoint.x, EndingPoint.y, EndingPoint.z) + GetOwner()->GetActorLocation();
+	FVector DebugStartingPoint = FVector(StartingPoint.x, StartingPoint.z, StartingPoint.y) + GetOwner()->GetActorLocation();
+	FVector DebugMidPoint = FVector(MidPoint.x, MidPoint.z, MidPoint.y) + GetOwner()->GetActorLocation();
+	FVector DebugEndPoint = FVector(EndingPoint.x, EndingPoint.z, EndingPoint.y) + GetOwner()->GetActorLocation();
 
 	DrawDebugPoint(GetWorld(), DebugStartingPoint, 10.0f, FColor::Red);
 	DrawDebugPoint(GetWorld(), DebugMidPoint, 10.0f, FColor::Red);
 	DrawDebugPoint(GetWorld(), DebugEndPoint, 10.0f, FColor::Red);
+
+	DrawDebugString(GetWorld(), DebugStartingPoint, TEXT("Past"), nullptr, FColor::Blue, 0.001f);
+	DrawDebugString(GetWorld(), DebugMidPoint, TEXT("Current"), nullptr, FColor::Blue, 0.001f);
+	DrawDebugString(GetWorld(), DebugEndPoint, TEXT("Future"), nullptr, FColor::Blue, 0.001f);
 
 }
 #endif

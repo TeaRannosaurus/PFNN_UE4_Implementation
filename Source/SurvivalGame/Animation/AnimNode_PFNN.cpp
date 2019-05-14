@@ -37,7 +37,7 @@ void FAnimNode_PFNN::LoadXForms()
 	IFileHandle* FileHandle = PlatformFile.OpenRead(*FullPathParents);
 	if (FileHandle == nullptr)
 	{
-		//UE_LOG(NeuralNetworkLoading, Fatal, TEXT("Fatal error, Failed to load charater parents"));
+		UE_LOG(PFNN_Logging, Fatal, TEXT("Fatal error, Failed to load charater parents"));
 		return;
 	}
 	float JointParentsFloat[JOINT_NUM];
@@ -52,7 +52,7 @@ void FAnimNode_PFNN::LoadXForms()
 	FileHandle = PlatformFile.OpenRead(*FullPathXforms);
 	if (FileHandle == nullptr)
 	{
-		//UE_LOG(NeuralNetworkLoading, Fatal, TEXT("Fatal error, Failed to load character xforms"));
+		UE_LOG(PFNN_Logging, Fatal, TEXT("Fatal error, Failed to load character xforms"));
 		return;
 	}
 	FileHandle->Read(reinterpret_cast<uint8*>(JointRestXform), sizeof(JointRestXform));
@@ -226,10 +226,6 @@ void FAnimNode_PFNN::ApplyPFNN()
 	{
 		const int W = (UTrajectoryComponent::LENGTH / 2) / 10;
 		const float M = fmod((static_cast<float>(i) - (UTrajectoryComponent::LENGTH / 2)) / 10.0, 1.0);
-		//Trajectory->Positions[i].x = (glm::normalize(TrajectoryTargetDirectionNew).x);
-		//Trajectory->Positions[i].y = (glm::normalize(TrajectoryTargetDirectionNew).y);
-		//Trajectory->Directions[i].x = TrajectoryTargetDirectionNew.x;
-		//Trajectory->Directions[i].y = TrajectoryTargetDirectionNew.y;
 
 		Trajectory->Positions[i].x = (1 - M) * PFNN->Yp(8 + (W * 0) + (i / 10) - W) + M * PFNN->Yp(8 + (W * 0) + (i / 10) - W + 1); 
 		Trajectory->Positions[i].z = (1 - M) * PFNN->Yp(8 + (W * 1) + (i / 10) - W) + M * PFNN->Yp(8 + (W * 1) + (i / 10) - W + 1); 
@@ -251,7 +247,7 @@ void FAnimNode_PFNN::ApplyPFNN()
 
 	for (int32 i = 0; i < JOINT_NUM; i++)
 	{
-		FinalBoneLocations[i] = FVector(JointPosition[i].x, JointPosition[i].y, JointPosition[i].z);
+		FinalBoneLocations[i] = FVector(JointPosition[i].x, JointPosition[i].z, JointPosition[i].y);
 
 		FMatrix UMatrix;
 		UMatrix.M[0][0] = JointMeshXform[i][0][0];	UMatrix.M[1][0] = JointMeshXform[i][1][0];	UMatrix.M[2][0] = JointMeshXform[i][2][0];	UMatrix.M[3][0] = JointMeshXform[i][3][0];
@@ -260,7 +256,8 @@ void FAnimNode_PFNN::ApplyPFNN()
 		UMatrix.M[0][3] = 0;						UMatrix.M[1][3] = 0;						UMatrix.M[2][3] = 0;						UMatrix.M[3][3] = 1;
 
 		const glm::quat Rotation = JointRotations[i];
-		FinalBoneRotations[i] = FQuat(Rotation.x, Rotation.z, Rotation.y, Rotation.w);
+		glm::vec3 eulerRotations = glm::eulerAngles(Rotation);
+		FinalBoneRotations[i] = FQuat(FQuat::MakeFromEuler(FVector(eulerRotations.x, eulerRotations.z, eulerRotations.y)));
 	}
 	
 	//Phase update
@@ -276,15 +273,15 @@ void FAnimNode_PFNN::ApplyPFNN()
 
 }
 
-glm::quat FAnimNode_PFNN::QuaternionExpression(const glm::vec3 arg_Length)
+glm::quat FAnimNode_PFNN::QuaternionExpression(const glm::vec3 arg_Vector)
 {
-	float W = glm::length(arg_Length);
+	float W = glm::length(arg_Vector);
 
 	const glm::quat Quat = W < 0.01 ? glm::quat(1.0f, 0.0f, 0.0f, 0.0f) : glm::quat(
 		cosf(W),
-		arg_Length.x * (sinf(W) / W),
-		arg_Length.y * (sinf(W) / W),
-		arg_Length.z * (sinf(W) / W));
+		arg_Vector.x * (sinf(W) / W),
+		arg_Vector.y * (sinf(W) / W),
+		arg_Vector.z * (sinf(W) / W));
 
 	return Quat / sqrtf(Quat.w*Quat.w + Quat.x*Quat.x + Quat.y*Quat.y + Quat.z*Quat.z);
 }
