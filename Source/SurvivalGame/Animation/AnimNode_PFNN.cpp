@@ -10,7 +10,7 @@
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <ThirdParty/glm/gtx/transform.inl>
-
+#include <ThirdParty/glm/gtx/euler_angles.hpp>
 #include <fstream>
 #include "Engine/Engine.h"
 
@@ -259,7 +259,8 @@ void FAnimNode_PFNN::ApplyPFNN()
 
 		const glm::quat Rotation = glm::quat_cast(JointRotations[i]);
 		glm::vec3 eulerRotations = glm::eulerAngles(Rotation);
-		FinalBoneRotations[i] = FQuat(FQuat::MakeFromEuler(FVector(eulerRotations.x, eulerRotations.z, eulerRotations.y)));
+		eulerRotations *= (180 / PI); //Convert To Degrees
+		FinalBoneRotations[i] = FQuat(FQuat::MakeFromEuler(FVector(eulerRotations.x, eulerRotations.z, eulerRotations.y))); //Flip YZ...  @TODO DEBUG AND PROPERLY FLIP
 	}
 	
 	//Phase update
@@ -355,25 +356,27 @@ void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 			const FCompactPoseBoneIndex RootBoneIndex(i);
 
 			const FCompactPoseBoneIndex ParentBoneIndex(Bones.GetParentBoneIndex(RootBoneIndex));
-			if (ParentBoneIndex.GetInt() == -1) 
-			{
+			if (ParentBoneIndex.GetInt() == -1)
+			{//Root Bone No conversion needed
+				arg_Output.Pose[RootBoneIndex].SetRotation(FinalBoneRotations[i]);
 				arg_Output.Pose[RootBoneIndex].SetLocation(FinalBoneLocations[i]);
-				arg_Output.Pose[RootBoneIndex].SetRotation(FinalBoneRotations[i]);
 			}
-			else 
-			{
+			else
+			{//Conversion to LocalSpace (hopefully)
+				FQuat LocalRotation = FinalBoneRotations[i] * FinalBoneRotations[ParentBoneIndex.GetInt()].Inverse();
+				arg_Output.Pose[RootBoneIndex].SetRotation(LocalRotation);
 				arg_Output.Pose[RootBoneIndex].SetLocation(FinalBoneLocations[i] - FinalBoneLocations[ParentBoneIndex.GetInt()]);
-				arg_Output.Pose[RootBoneIndex].SetRotation(FinalBoneRotations[i]);
-				arg_Output.Pose[RootBoneIndex].NormalizeRotation();
+
+				FRotator BoneRotator = FRotator(FinalBoneRotations[i]);
+				arg_Output.AnimInstanceProxy->AnimDrawDebugCoordinateSystem(FinalBoneLocations[i] + CharacterTransform.GetLocation(), BoneRotator, 10.0f, false, -1.0f, 0.2);
 			}
 			arg_Output.AnimInstanceProxy->AnimDrawDebugSphere(FinalBoneLocations[i] + CharacterTransform.GetLocation(), 2.5f, 12, FColor::Green, false, -1.0f);
 			if (ParentBoneIndex != -1) 
 			{
-				arg_Output.AnimInstanceProxy->AnimDrawDebugLine(FinalBoneLocations[i] + CharacterTransform.GetLocation(), FinalBoneLocations[ParentBoneIndex.GetInt()] + CharacterTransform.GetLocation(), FColor::White,false,-1,5.0f);
+				arg_Output.AnimInstanceProxy->AnimDrawDebugLine(FinalBoneLocations[i] + CharacterTransform.GetLocation(), FinalBoneLocations[ParentBoneIndex.GetInt()] + CharacterTransform.GetLocation(), FColor::White,false,-1,2.0f);
 			}
-
 		}
-
+		arg_Output.Pose.NormalizeRotations();
 	}
 	else 
 	{
