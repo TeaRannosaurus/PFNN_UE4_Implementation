@@ -169,17 +169,12 @@ void FAnimNode_PFNN::ApplyPFNN()
 
 		const glm::vec3 Position = (RootRotation * glm::vec3(PFNN->Yp(OPosition + i * 3 + 0), PFNN->Yp(OPosition + i * 3 + 1), PFNN->Yp(OPosition + i * 3 + 2))) + RootPosition;
 		const glm::vec3 Velocity = (RootRotation * glm::vec3(PFNN->Yp(OVelocity + i * 3 + 0), PFNN->Yp(OVelocity + i * 3 + 1), PFNN->Yp(OVelocity + i * 3 + 2)));
-		const glm::mat3 Rotation = (RootRotation * glm::toMat3(QuaternionExpression(glm::vec3(PFNN->Yp(ORoation + i * 3 + 0), PFNN->Yp(ORoation + i * 3 + 1), PFNN->Yp(ORoation + i * 3 + 2)))));
+		const glm::vec3 Rotation = glm::vec3(PFNN->Yp(ORoation + i * 3 + 0), PFNN->Yp(ORoation + i * 3 + 1), PFNN->Yp(ORoation + i * 3 + 2));
 
 		JointPosition[i] = glm::mix(JointPosition[i] + Velocity, Position, Trajectory->ExtraJointSmooth);
 		JointVelocitys[i] = Velocity;
 		JointRotations[i] = Rotation;
 
-		JointGlobalAnimXform[i] = glm::transpose(glm::mat4(
-			Rotation[0][0], Rotation[1][0], Rotation[2][0], Position[0],
-			Rotation[0][1], Rotation[1][1], Rotation[2][1], Position[1],
-			Rotation[0][2], Rotation[1][2], Rotation[2][2], Position[2],
-			0, 0, 0, 1));
 	}
 
 	for (int i = 0; i < JOINT_NUM; i++)
@@ -251,17 +246,8 @@ void FAnimNode_PFNN::ApplyPFNN()
 	for (int32 i = 0; i < JOINT_NUM; i++)
 	{
 		FinalBoneLocations[i] = FVector(-JointPosition[i].x, JointPosition[i].z, JointPosition[i].y);
-
-		FMatrix UMatrix;
-		UMatrix.M[0][0] = JointMeshXform[i][0][0];	UMatrix.M[1][0] = JointMeshXform[i][1][0];	UMatrix.M[2][0] = JointMeshXform[i][2][0];	UMatrix.M[3][0] = JointMeshXform[i][3][0];
-		UMatrix.M[0][1] = JointMeshXform[i][0][1];	UMatrix.M[1][1] = JointMeshXform[i][1][1];	UMatrix.M[2][1] = JointMeshXform[i][2][1];	UMatrix.M[3][1] = JointMeshXform[i][3][1];
-		UMatrix.M[0][2] = JointMeshXform[i][0][2];	UMatrix.M[1][2] = JointMeshXform[i][1][2];	UMatrix.M[2][2] = JointMeshXform[i][2][2];	UMatrix.M[3][2] = JointMeshXform[i][3][2];
-		UMatrix.M[0][3] = 0;						UMatrix.M[1][3] = 0;						UMatrix.M[2][3] = 0;						UMatrix.M[3][3] = 1;
-
-		const glm::quat Rotation = glm::quat_cast(JointRotations[i]);
-		glm::vec3 eulerRotations = glm::eulerAngles(Rotation);
-		eulerRotations *= (180 / PI); //Convert To Degrees
-		FinalBoneRotations[i] = FQuat(FQuat::MakeFromEuler(FVector(-eulerRotations.x, eulerRotations.z, eulerRotations.y))); //Flip YZ...  @TODO DEBUG AND PROPERLY FLIP
+		FVector UnrealJointRotation = FVector(-JointRotations[i].x, JointRotations[i].z, JointRotations[i].y);
+		FinalBoneRotations[i] = FQuat(FQuat::MakeFromEuler(FVector::RadiansToDegrees(UnrealJointRotation))); //Flip YZ...  @TODO DEBUG AND PROPERLY FLIP
 	}
 	
 	//Phase update
@@ -355,28 +341,36 @@ void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 
 		for (int32 i = 0; i < JOINT_NUM; i++)
 		{
-			const FCompactPoseBoneIndex RootBoneIndex(i);
-			const FCompactPoseBoneIndex ParentBoneIndex(Bones.GetParentBoneIndex(RootBoneIndex));
+			const FCompactPoseBoneIndex CurrentBoneIndex(i);
+			const FCompactPoseBoneIndex ParentBoneIndex(Bones.GetParentBoneIndex(CurrentBoneIndex));
 
 			if (ParentBoneIndex.GetInt() == -1)
 			{	//Root Bone No conversion needed
-				arg_Output.Pose[RootBoneIndex].SetRotation(FinalBoneRotations[i]);
-				arg_Output.Pose[RootBoneIndex].SetLocation(FinalBoneLocations[i]);
+				arg_Output.Pose[CurrentBoneIndex].SetRotation(FinalBoneRotations[CurrentBoneIndex.GetInt()]);
+				arg_Output.Pose[CurrentBoneIndex].SetLocation(FinalBoneLocations[CurrentBoneIndex.GetInt()]);
 			}
 			else
 			{	//Conversion to LocalSpace (hopefully)
 				
-				//GetInverse of parent rotation
-				FQuat InverseParentRotation = FinalBoneRotations[ParentBoneIndex.GetInt()].Inverse();
-				//Subtract ParentLocation from ChildLocation
-				FVector TranslationDifference = FinalBoneLocations[i] - FinalBoneLocations[ParentBoneIndex.GetInt()];
+				FTransform CurrentBoneTransform = FTransform(FinalBoneRotations[CurrentBoneIndex.GetInt()], FinalBoneLocations[CurrentBoneIndex.GetInt()], FVector::OneVector);
+				FTransform ParentBoneTransform = FTransform(FinalBoneRotations[ParentBoneIndex.GetInt()], FinalBoneLocations[ParentBoneIndex.GetInt()], FVector::OneVector);
 
-				FQuat LocalRotation = InverseParentRotation * FinalBoneRotations[i];
-				FVector LocalTranslation = TranslationDifference;
-				
-				//APPLY Local Rotations and Locations
-				arg_Output.Pose[RootBoneIndex].SetRotation(LocalRotation);
-				arg_Output.Pose[RootBoneIndex].SetLocation(LocalTranslation);
+				FTransform LocalBoneTransform = CurrentBoneTransform.GetRelativeTransform(ParentBoneTransform);
+
+				arg_Output.Pose[CurrentBoneIndex].SetComponents(LocalBoneTransform.GetRotation(), LocalBoneTransform.GetLocation(), LocalBoneTransform.GetScale3D());
+
+				////GetInverse of parent rotation
+				//FQuat ParentInverse = FinalBoneRotations[ParentBoneIndex.GetInt()].Inverse();
+
+				////Calculate Local Rotation
+				//FQuat LocalRotation = ParentInverse * FinalBoneRotations[CurrentBoneIndex.GetInt()];
+
+				////Calculate Local Rotation
+				//FVector LocalTranslation = FinalBoneLocations[i] - FinalBoneLocations[ParentBoneIndex.GetInt()];
+				//
+				////APPLY Local Rotations and Locations
+				//arg_Output.Pose[CurrentBoneIndex].SetRotation(LocalRotation);
+				//arg_Output.Pose[CurrentBoneIndex].SetLocation(ParentInverse * LocalTranslation);
 			}
 		}
 		arg_Output.Pose.NormalizeRotations();
@@ -413,7 +407,7 @@ void FAnimNode_PFNN::LogNetworkData(int arg_FrameCounter)
 
 				for (size_t x = 0; x < 3; x++)
 				{
-					fs << "	JointRotations:  " << JointRotations[i][x].x << "X, " << JointRotations[i][x].y << ", " << JointRotations[i][x].z << std::endl;
+				//fs << "	JointRotations:  " << JointRotations[i][x].x << "X, " << JointRotations[i][x].y << ", " << JointRotations[i][x].z << std::endl;
 				}
 
 				for (size_t x = 0; x < 3; x++)

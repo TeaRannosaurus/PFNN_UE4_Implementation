@@ -124,7 +124,7 @@ struct SURVIVALGAME_API FAnimNode_PFNN : public FAnimNode_Base
 
 	glm::vec3 JointPosition[JOINT_NUM];
 	glm::vec3 JointVelocitys[JOINT_NUM];
-	glm::mat4 JointRotations[JOINT_NUM];
+	glm::vec3 JointRotations[JOINT_NUM];
 
 	glm::mat4 JointAnimXform[JOINT_NUM];
 	glm::mat4 JointRestXform[JOINT_NUM];
