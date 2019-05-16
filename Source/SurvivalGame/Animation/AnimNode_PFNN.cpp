@@ -368,12 +368,11 @@ void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 				
 				//GetInverse of parent rotation
 				FQuat InverseParentRotation = FinalBoneRotations[ParentBoneIndex.GetInt()].Inverse();
-				
 				//Subtract ParentLocation from ChildLocation
 				FVector TranslationDifference = FinalBoneLocations[i] - FinalBoneLocations[ParentBoneIndex.GetInt()];
 
 				FQuat LocalRotation = InverseParentRotation * FinalBoneRotations[i];
-				FVector LocalTranslation = InverseParentRotation* TranslationDifference;
+				FVector LocalTranslation = TranslationDifference;
 				
 				//APPLY Local Rotations and Locations
 				arg_Output.Pose[RootBoneIndex].SetRotation(LocalRotation);
