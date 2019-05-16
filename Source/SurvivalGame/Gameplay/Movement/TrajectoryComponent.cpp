@@ -358,10 +358,6 @@ void UTrajectoryComponent::TickTrajectory()
 #if !UE_BUILD_SHIPPING //Debug functions are excluded from the shipping build
 void UTrajectoryComponent::DrawDebugTrajectory()
 {
-	const float MajorPointSize = 15.0f;
-	const float MinorPointSize = 5.0f;
-	const float PointOffset = 2.0f;
-
 	const auto StartingPoint = Positions[0] * 100.0f;			//Get the leading point of the trajectory
 	const auto MidPoint = Positions[LENGTH / 2] * 100.0f;		//Get the mid point/player point of the trajectory
 	const auto EndingPoint = Positions[LENGTH - 1] * 100.0f;	//Get the ending point of the trajectory
@@ -371,9 +367,9 @@ void UTrajectoryComponent::DrawDebugTrajectory()
 			FVector DebugLocation = (FVector(Positions[i].x, Positions[i].z, Positions[i].y) * 100.0f) + GetOwner()->GetActorLocation();
 			DrawDebugPoint(GetWorld(), DebugLocation, 4.0f,FColor::Red);
 
-			FVector Ue4Direction = FVector(Directions[i].x, Directions[i].z, Directions[i].y) * 10.0f;
+			FVector Ue4Direction = FVector(Directions[i].x, Directions[i].y, Directions[i].z) * 10.0f;
 			FVector DirectionLocation = DebugLocation + Ue4Direction;
-			DrawDebugLine(GetWorld(), DebugLocation, DirectionLocation, FColor::Black, false, -1.0f, 0, 0.2f);
+			DrawDebugLine(GetWorld(), DebugLocation, DirectionLocation, FColor::Black, false, -1.0f, 0, 3.f);
 	}
 
 	FVector DebugStartingPoint = FVector(StartingPoint.x, StartingPoint.z, StartingPoint.y) + GetOwner()->GetActorLocation();
