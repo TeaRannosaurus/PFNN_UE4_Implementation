@@ -148,6 +148,7 @@ struct SURVIVALGAME_API FAnimNode_PFNN : public FAnimNode_Base
 	bool bIsPFNNLoaded;
 
 private:
+	void DrawDebugSkeleton(const FPoseContext& arg_Context);
 	void DrawDebugBoneVelocity(const FPoseContext& arg_Context);
 	void VisualizePhase();
 

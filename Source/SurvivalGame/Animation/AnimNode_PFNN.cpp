@@ -250,7 +250,7 @@ void FAnimNode_PFNN::ApplyPFNN()
 
 	for (int32 i = 0; i < JOINT_NUM; i++)
 	{
-		FinalBoneLocations[i] = FVector(JointPosition[i].x, JointPosition[i].z, JointPosition[i].y);
+		FinalBoneLocations[i] = FVector(-JointPosition[i].x, JointPosition[i].z, JointPosition[i].y);
 
 		FMatrix UMatrix;
 		UMatrix.M[0][0] = JointMeshXform[i][0][0];	UMatrix.M[1][0] = JointMeshXform[i][1][0];	UMatrix.M[2][0] = JointMeshXform[i][2][0];	UMatrix.M[3][0] = JointMeshXform[i][3][0];
@@ -261,7 +261,7 @@ void FAnimNode_PFNN::ApplyPFNN()
 		const glm::quat Rotation = glm::quat_cast(JointRotations[i]);
 		glm::vec3 eulerRotations = glm::eulerAngles(Rotation);
 		eulerRotations *= (180 / PI); //Convert To Degrees
-		FinalBoneRotations[i] = FQuat(FQuat::MakeFromEuler(FVector(eulerRotations.x, eulerRotations.z, eulerRotations.y))); //Flip YZ...  @TODO DEBUG AND PROPERLY FLIP
+		FinalBoneRotations[i] = FQuat(FQuat::MakeFromEuler(FVector(-eulerRotations.x, eulerRotations.z, eulerRotations.y))); //Flip YZ...  @TODO DEBUG AND PROPERLY FLIP
 	}
 	
 	//Phase update
@@ -352,41 +352,43 @@ void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 	if (FinalBoneLocations.Num() >= JOINT_NUM && FinalBoneRotations.Num() >= JOINT_NUM) 
 	{
 		auto Bones = arg_Output.Pose.GetBoneContainer();
-		auto Skeleton = Bones.GetReferenceSkeleton();
 
 		for (int32 i = 0; i < JOINT_NUM; i++)
 		{
 			const FCompactPoseBoneIndex RootBoneIndex(i);
-
 			const FCompactPoseBoneIndex ParentBoneIndex(Bones.GetParentBoneIndex(RootBoneIndex));
+
 			if (ParentBoneIndex.GetInt() == -1)
-			{//Root Bone No conversion needed
+			{	//Root Bone No conversion needed
 				arg_Output.Pose[RootBoneIndex].SetRotation(FinalBoneRotations[i]);
 				arg_Output.Pose[RootBoneIndex].SetLocation(FinalBoneLocations[i]);
 			}
 			else
-			{//Conversion to LocalSpace (hopefully)
-				FQuat LocalRotation = FinalBoneRotations[i] * FinalBoneRotations[ParentBoneIndex.GetInt()].Inverse();
-				arg_Output.Pose[RootBoneIndex].SetRotation(LocalRotation);
-				arg_Output.Pose[RootBoneIndex].SetLocation(FinalBoneLocations[i] - FinalBoneLocations[ParentBoneIndex.GetInt()]);
+			{	//Conversion to LocalSpace (hopefully)
+				
+				//GetInverse of parent rotation
+				FQuat InverseParentRotation = FinalBoneRotations[ParentBoneIndex.GetInt()].Inverse();
+				
+				//Subtract ParentLocation from ChildLocation
+				FVector TranslationDifference = FinalBoneLocations[i] - FinalBoneLocations[ParentBoneIndex.GetInt()];
 
-				FRotator BoneRotator = FRotator(FinalBoneRotations[i]);
-				arg_Output.AnimInstanceProxy->AnimDrawDebugCoordinateSystem(FinalBoneLocations[i] + CharacterTransform.GetLocation(), BoneRotator, 10.0f, false, -1.0f, 0.2);
-			}
-			arg_Output.AnimInstanceProxy->AnimDrawDebugSphere(FinalBoneLocations[i] + CharacterTransform.GetLocation(), 2.5f, 12, FColor::Green, false, -1.0f);
-			if (ParentBoneIndex != -1) 
-			{
-				arg_Output.AnimInstanceProxy->AnimDrawDebugLine(FinalBoneLocations[i] + CharacterTransform.GetLocation(), FinalBoneLocations[ParentBoneIndex.GetInt()] + CharacterTransform.GetLocation(), FColor::White,false,-1,2.0f);
+				FQuat LocalRotation = InverseParentRotation * FinalBoneRotations[i];
+				FVector LocalTranslation = InverseParentRotation* TranslationDifference;
+				
+				//APPLY Local Rotations and Locations
+				arg_Output.Pose[RootBoneIndex].SetRotation(LocalRotation);
+				arg_Output.Pose[RootBoneIndex].SetLocation(LocalTranslation);
 			}
 		}
 		arg_Output.Pose.NormalizeRotations();
+
+		DrawDebugSkeleton(arg_Output);
+		DrawDebugBoneVelocity(arg_Output);
 	}
 	else 
 	{
 		UE_LOG(PFNN_Logging, Error, TEXT("PFNN results were not properly applied!"));
 	}
-
-	DrawDebugBoneVelocity(arg_Output);
 }
 
 void FAnimNode_PFNN::LogNetworkData(int arg_FrameCounter) 
@@ -468,6 +470,48 @@ void FAnimNode_PFNN::LogNetworkData(int arg_FrameCounter)
 	
 }
 
+void FAnimNode_PFNN::DrawDebugSkeleton(const FPoseContext& arg_Context) 
+{
+	const FTransform& CharacterTransform = arg_Context.AnimInstanceProxy->GetActorTransform();
+	FBoneContainer Bones = arg_Context.Pose.GetBoneContainer();
+
+	for (int32 i = 0; i < JOINT_NUM; i++)
+	{
+		const FCompactPoseBoneIndex CurrentBoneIndex(i);
+		FCompactPoseBoneIndex ParentBoneIndex(Bones.GetParentBoneIndex(CurrentBoneIndex));
+
+		FVector CurrentBoneLocation = arg_Context.Pose[CurrentBoneIndex].GetLocation();
+		FVector ParentBoneLocation = CurrentBoneLocation;
+		if (ParentBoneIndex.GetInt() != -1) 
+		{
+			ParentBoneLocation = arg_Context.Pose[ParentBoneIndex].GetLocation();
+		}
+
+		while (ParentBoneIndex.GetInt() != -1) 
+		{
+			CurrentBoneLocation += arg_Context.Pose[ParentBoneIndex].GetLocation();
+			ParentBoneIndex = Bones.GetParentBoneIndex(ParentBoneIndex);
+		}
+
+		ParentBoneIndex = Bones.GetParentBoneIndex(CurrentBoneIndex);
+		if (ParentBoneIndex.GetInt() != -1) 
+		{
+			ParentBoneIndex = Bones.GetParentBoneIndex(ParentBoneIndex);
+
+			while (ParentBoneIndex.GetInt() != -1)
+			{
+				ParentBoneLocation += arg_Context.Pose[ParentBoneIndex].GetLocation();
+				ParentBoneIndex = Bones.GetParentBoneIndex(ParentBoneIndex);
+			}
+		}
+
+		FRotator BoneRotator = FRotator(FinalBoneRotations[i]);
+		arg_Context.AnimInstanceProxy->AnimDrawDebugCoordinateSystem(CurrentBoneLocation + CharacterTransform.GetLocation(), BoneRotator, 10.0f, false, -1.0f, 0.2);
+		arg_Context.AnimInstanceProxy->AnimDrawDebugSphere(CurrentBoneLocation + CharacterTransform.GetLocation(), 2.5f, 12, FColor::Green, false, -1.0f);
+		arg_Context.AnimInstanceProxy->AnimDrawDebugLine(CurrentBoneLocation + CharacterTransform.GetLocation(), ParentBoneLocation + CharacterTransform.GetLocation(), FColor::White, false, -1, 2.0f);
+	}
+}
+
 void FAnimNode_PFNN::DrawDebugBoneVelocity(const FPoseContext& arg_Context)
 {
 	if(!GEngine)
@@ -480,7 +524,7 @@ void FAnimNode_PFNN::DrawDebugBoneVelocity(const FPoseContext& arg_Context)
 		arg_Context.AnimInstanceProxy->AnimDrawDebugLine(
 			JointPos,
 			JointPos - 10 * FVector(JointVelocitys[i].x, JointVelocitys[i].z, JointVelocitys[i].y),
-			FColor::Red, 
+			FColor::Yellow, 
 			false,
 			-1, 
 			0.5f

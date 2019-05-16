@@ -78,7 +78,7 @@ void UTrajectoryComponent::BeginPlay()
 glm::vec3 UTrajectoryComponent::GetRootPosition() const
 {
 	return glm::vec3(
-		GetOwner()->GetActorLocation().X * 0.01f,
+		-GetOwner()->GetActorLocation().X * 0.01f,
 		Heights[LENGTH / 2],
 		GetOwner()->GetActorLocation().Y * 0.01f
 	);
@@ -325,7 +325,7 @@ void UTrajectoryComponent::TickTrajectory()
 	if (BaseCharacter) 
 	{
 		auto MovementComponent = BaseCharacter->GetMovementComponent();
-		CurrentFrameInput = glm::vec2(MovementComponent->Velocity.X*0.01f, MovementComponent->Velocity.Y*0.01f);
+		CurrentFrameInput = glm::vec2(-MovementComponent->Velocity.X*0.01f, MovementComponent->Velocity.Y*0.01f);
 		CurrentFrameInput = glm::normalize(CurrentFrameInput);
 	}
 
@@ -334,7 +334,7 @@ void UTrajectoryComponent::TickTrajectory()
 		CurrentFrameInput = glm::vec2(0);
 	}
 
-	glm::vec3 TrajectoryTargetDirectionNew = glm::normalize(glm::vec3(GetOwner()->GetActorForwardVector().X, 0.0f, GetOwner()->GetActorForwardVector().Y));
+	glm::vec3 TrajectoryTargetDirectionNew = glm::normalize(glm::vec3(-GetOwner()->GetActorForwardVector().X, 0.0f, GetOwner()->GetActorForwardVector().Y));
 	const glm::mat3 TrajectoryTargetRotation = glm::mat3(glm::rotate(atan2f(
 		TrajectoryTargetDirectionNew.x,
 		TrajectoryTargetDirectionNew.z), glm::vec3(0, 1, 0)));
