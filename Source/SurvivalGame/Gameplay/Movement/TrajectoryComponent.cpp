@@ -341,7 +341,7 @@ void UTrajectoryComponent::TickTrajectory()
 		TrajectoryTargetDirectionNew.z), glm::vec3(0, 1, 0)));
 
 
-	CurrentFrameInput.x = 1;
+	//CurrentFrameInput.x = 1;
 	const float TargetVelocitySpeed = OwnerPawn->GetVelocity().SizeSquared() / (OwnerPawn->GetMovementComponent()->GetMaxSpeed() * OwnerPawn->GetMovementComponent()->GetMaxSpeed()) * 7.5f; //7.5 is current training walking speed
 
 	const glm::vec3 TrajectoryTargetVelocityNew = TargetVelocitySpeed * (TrajectoryTargetRotation * glm::vec3(CurrentFrameInput.x, 0, CurrentFrameInput.y));
