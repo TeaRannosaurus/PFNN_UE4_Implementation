@@ -11,6 +11,7 @@
 #include <ThirdParty/glm/ext/quaternion_trigonometric.inl>
 #include <ThirdParty/glm/ext/quaternion_common.inl>
 #include <ThirdParty/glm/detail/type_quat.hpp>
+#include "DrawDebugHelpers.h"
 
 #include <fstream>
 
@@ -338,15 +339,25 @@ void UTrajectoryComponent::TickTrajectory()
 		TrajectoryTargetDirectionNew.x,
 		TrajectoryTargetDirectionNew.z), glm::vec3(0, 1, 0)));
 
-	float TargetVelocitySpeed = OwnerPawn->GetVelocity().SizeSquared() / (OwnerPawn->GetMovementComponent()->GetMaxSpeed() * OwnerPawn->GetMovementComponent()->GetMaxSpeed()) * 7.5f; //7.5 is current training walking speed
+
+	//CurrentFrameInput.x = 1;
+	const float TargetVelocitySpeed = OwnerPawn->GetVelocity().SizeSquared() / (OwnerPawn->GetMovementComponent()->GetMaxSpeed() * OwnerPawn->GetMovementComponent()->GetMaxSpeed()) * 7.5f; //7.5 is current training walking speed
 
 	const glm::vec3 TrajectoryTargetVelocityNew = TargetVelocitySpeed * (TrajectoryTargetRotation * glm::vec3(CurrentFrameInput.x, 0, CurrentFrameInput.y));
 	TargetVelocity = glm::mix(TargetVelocity, TrajectoryTargetVelocityNew, ExtraVelocitySmooth);
-
+	TargetVelocity = glm::vec3(1, 0, 0);
 	StrafeAmount = glm::mix(StrafeAmount, StrafeTarget, ExtraStrafeSmooth);
 	const glm::vec3 TrajectoryTargetVelocityDirection = glm::length(TargetVelocity) < 1e-05 ? TargetDirection : glm::normalize(TargetVelocity);
 	TrajectoryTargetDirectionNew = MixDirections(TrajectoryTargetVelocityDirection, TrajectoryTargetDirectionNew, StrafeAmount);
 	TargetDirection = MixDirections(TargetDirection, TrajectoryTargetDirectionNew, ExtraDirectionSmooth);
+
+	DrawDebugDirectionalArrow(GetWorld(), GetOwner()->GetActorLocation(), GetOwner()->GetActorLocation() + FVector(TrajectoryTargetDirectionNew.x, TrajectoryTargetDirectionNew.z, TrajectoryTargetDirectionNew.y) * 100, 0.0f, FColor::Green, false, -1, 0, 2);
+	DrawDebugDirectionalArrow(GetWorld(), GetOwner ()->GetActorLocation(), GetOwner()->GetActorLocation() + FVector(TrajectoryTargetDirectionNew.x, TrajectoryTargetDirectionNew.z, TrajectoryTargetDirectionNew.y) * 100, 0.0f, FColor::Blue, false, -1, 0, 2);
+
+	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::White, FString::Printf(TEXT("x: %f y: %f Current frame input"), CurrentFrameInput.x, CurrentFrameInput.y));
+	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Green, FString::Printf(TEXT("x: %f y: %f z: %f TrajectoryTargetDirectionNew"), TrajectoryTargetDirectionNew.x, TrajectoryTargetDirectionNew.y, TrajectoryTargetDirectionNew.z));
+	DrawDebugDirectionalArrow(GetWorld(), GetOwner()->GetActorLocation(), GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 150, 10.0f, FColor::Red, false, -1, 0, 5);
+	DrawDebugDirectionalArrow(GetWorld(), GetOwner()->GetActorLocation(), GetOwner()->GetActorLocation() + FVector(-CurrentFrameInput.x, CurrentFrameInput.y, 0.0f) * 100, 10.0f, FColor::White, false, -1, 0, 2);
 
 	TickGaits();
 	PredictFutureTrajectory();
