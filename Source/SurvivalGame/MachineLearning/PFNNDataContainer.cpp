@@ -23,6 +23,11 @@ UPFNNDataContainer::UPFNNDataContainer(const FObjectInitializer& arg_ObjectIniti
 	b2p = Eigen::ArrayXf(static_cast<int>(YDIM));
 }
 
+UPFNNDataContainer::~UPFNNDataContainer()
+{
+	UE_LOG(PFNN_Logging, Log, TEXT("PFNN Data Container is being deconstructed..."));
+}
+
 void UPFNNDataContainer::LoadNetworkData(const EPFNNMode arg_Mode) 
 {
 	if(bIsDataLoaded)
@@ -184,4 +189,19 @@ void UPFNNDataContainer::LoadWeights(Eigen::ArrayXf& arg_V, const int arg_Items,
 bool UPFNNDataContainer::IsDataLoaded() const
 {
 	return bIsDataLoaded;
+}
+
+
+FPFNNDataLoader::FPFNNDataLoader(UPFNNDataContainer* arg_PFNNDataContainer) : PFNNDataContainer(arg_PFNNDataContainer)
+{
+
+}
+
+FPFNNDataLoader::~FPFNNDataLoader()
+{
+}
+
+void FPFNNDataLoader::DoWork()
+{
+	PFNNDataContainer->LoadNetworkData(EPFNNMode::PM_Cubic);
 }
