@@ -204,7 +204,6 @@ void UTrajectoryComponent::TickHeights()
 	{
 		FCollisionQueryParams TraceParams = FCollisionQueryParams(FName(TEXT("GroundGeometryTrace")), true, GetOwner());
 		TraceParams.bTraceComplex = true;
-		TraceParams.bTraceAsyncScene = true;
 		TraceParams.bReturnPhysicalMaterial = false;
 
 		const float DistanceLenght = 10000;
@@ -364,17 +363,17 @@ void UTrajectoryComponent::DrawDebugTrajectory()
 
 	for (size_t i = 0; i < LENGTH; i++)
 	{
-			FVector DebugLocation = (FVector(Positions[i].x, Positions[i].z, Positions[i].y) * 100.0f) + GetOwner()->GetActorLocation();
+			FVector DebugLocation = (FVector(-Positions[i].x, Positions[i].z, Positions[i].y) * 100.0f) + GetOwner()->GetActorLocation();
 			DrawDebugPoint(GetWorld(), DebugLocation, 4.0f,FColor::Red);
 
-			FVector Ue4Direction = FVector(Directions[i].x, Directions[i].y, Directions[i].z) * 10.0f;
+			FVector Ue4Direction = FVector(-Directions[i].x, Directions[i].z, Directions[i].y) * 10.0f;
 			FVector DirectionLocation = DebugLocation + Ue4Direction;
-			DrawDebugLine(GetWorld(), DebugLocation, DirectionLocation, FColor::Black, false, -1.0f, 0, 3.f);
+			DrawDebugDirectionalArrow(GetWorld(), DebugLocation, DirectionLocation, 50.0f, FColor::Black, false, -1.0f, 0, 1.0f);
 	}
 
-	FVector DebugStartingPoint = FVector(StartingPoint.x, StartingPoint.z, StartingPoint.y) + GetOwner()->GetActorLocation();
-	FVector DebugMidPoint = FVector(MidPoint.x, MidPoint.z, MidPoint.y) + GetOwner()->GetActorLocation();
-	FVector DebugEndPoint = FVector(EndingPoint.x, EndingPoint.z, EndingPoint.y) + GetOwner()->GetActorLocation();
+	FVector DebugStartingPoint = FVector(-StartingPoint.x, StartingPoint.z, StartingPoint.y) + GetOwner()->GetActorLocation();
+	FVector DebugMidPoint = FVector(-MidPoint.x, MidPoint.z, MidPoint.y) + GetOwner()->GetActorLocation();
+	FVector DebugEndPoint = FVector(-EndingPoint.x, EndingPoint.z, EndingPoint.y) + GetOwner()->GetActorLocation();
 
 	DrawDebugPoint(GetWorld(), DebugStartingPoint, 10.0f, FColor::Red);
 	DrawDebugPoint(GetWorld(), DebugMidPoint, 10.0f, FColor::Red);

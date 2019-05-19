@@ -59,8 +59,6 @@ enum
 	JOINT_THUMB_R = 30,
 };
 
-
-
 class UTrajectoryComponent;
 class UPhaseFunctionNeuralNetwork;
 

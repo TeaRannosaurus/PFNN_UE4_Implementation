@@ -1,0 +1,23 @@
+{
+    "FileVersion" : 3,
+    "Version": 1,
+	  "VersionName": "0.1",
+    "FriendlyName" : "PFNNAnimation",
+    "CreatedBy" : "Tim & Lars produtions",
+    "CreatedByURL" : "",
+    "EngineVersion" : "4.22.0",
+    "MarketplaceURL" : "",
+    "Description" : "PFNN animation module",
+    "Category" : "Editor",
+    "CanContainContent": true,
+	  "IsBetaVersion": false,
+	  "Installed": false,
+    "Modules" :
+    [
+      {
+        "Name": "PFNNAnimation",
+        "Type": "Developer",
+        "LoadingPhase": "PreDefault"
+      }
+    ]
+}
