@@ -20,6 +20,8 @@ public:
 
 	class UPFNNDataContainer* GetPFNNDataContainer();
 
+	void LoadPFNNDataAsync();
+
 private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "True"))

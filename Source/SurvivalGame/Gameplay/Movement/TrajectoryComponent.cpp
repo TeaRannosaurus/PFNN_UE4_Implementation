@@ -205,7 +205,6 @@ void UTrajectoryComponent::TickHeights()
 	{
 		FCollisionQueryParams TraceParams = FCollisionQueryParams(FName(TEXT("GroundGeometryTrace")), true, GetOwner());
 		TraceParams.bTraceComplex = true;
-		TraceParams.bTraceAsyncScene = true;
 		TraceParams.bReturnPhysicalMaterial = false;
 
 		const float DistanceLenght = 10000.0f;

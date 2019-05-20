@@ -6,6 +6,9 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+
+#include "Async/AsyncWork.h"
+
 #include "PFNNDataContainer.generated.h"
 
 class UPhaseFunctionNeuralNetwork;
@@ -21,6 +24,8 @@ class SURVIVALGAME_API UPFNNDataContainer : public UObject
 public:
 
 	UPFNNDataContainer(const FObjectInitializer& arg_ObjectInitializer);
+
+	~UPFNNDataContainer();
 
 	/*
 	* @Description Load in the Phase Function Neural Network.
@@ -68,4 +73,27 @@ private:
 	Eigen::ArrayXXf W0p, W1p, W2p;
 	Eigen::ArrayXf  b0p, b1p, b2p;
 	//Ending of things that you should not change.
+};
+
+class FPFNNDataLoader : public FNonAbandonableTask
+{
+
+public:
+
+	FPFNNDataLoader(UPFNNDataContainer* arg_PFNNDataContainer);
+
+	~FPFNNDataLoader();
+
+	FORCEINLINE TStatId GetStatId() const
+	{
+		RETURN_QUICK_DECLARE_CYCLE_STAT(PFNNDataLoader, STATGROUP_ThreadPoolAsyncTasks)
+	}
+
+	void DoWork();
+
+private:
+
+	UPROPERTY()
+	UPFNNDataContainer* PFNNDataContainer;
+
 };

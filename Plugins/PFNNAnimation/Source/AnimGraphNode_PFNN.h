@@ -2,10 +2,11 @@
 
 #pragma once
 
+#include "SurvivalGame/Animation/AnimNode_PFNN.h"
+
 #include "CoreMinimal.h"
 #include "UObject/ObjectMacros.h"
 #include "AnimGraphNode_Base.h"
-#include "../SurvivalGame/Animation/AnimNode_PFNN.h"
 
 #include "AnimGraphNode_PFNN.generated.h"
 
@@ -28,7 +29,7 @@ public:
 	 * @param[in] TitleType, blueprint title of this object 
 	 * @return Tilte of this animation node
 	 */
-	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
+	virtual FText GetNodeTitle(ENodeTitleType::Type arg_TitleType) const override;
 	/**
 	 * Default AnimGraphNode function to get GetTooltipText
 	 * @return GetTooltipText of this animation node

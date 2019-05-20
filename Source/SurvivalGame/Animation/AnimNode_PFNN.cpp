@@ -17,7 +17,7 @@
 
 UPhaseFunctionNeuralNetwork* FAnimNode_PFNN::PFNN = nullptr;
 
-FAnimNode_PFNN::FAnimNode_PFNN(): Trajectory(nullptr), Phase(0), PFNNAnimInstance(nullptr), FrameCounter(0),
+FAnimNode_PFNN::FAnimNode_PFNN(): PFNNAnimInstance(nullptr), Trajectory(nullptr), Phase(0),  FrameCounter(0),
 								  bIsPFNNLoaded(false)
 {
 }
@@ -137,7 +137,6 @@ void FAnimNode_PFNN::ApplyPFNN()
 
 		FCollisionQueryParams TraceParams = FCollisionQueryParams(FName(TEXT("GroundGeometryTrace")), true, Trajectory->GetOwner());
 		TraceParams.bTraceComplex = true;
-		TraceParams.bTraceAsyncScene = true;
 		TraceParams.bReturnPhysicalMaterial = false;
 
 		const float DistanceLenght = 10000;
@@ -246,8 +245,15 @@ void FAnimNode_PFNN::ApplyPFNN()
 	for (int32 i = 0; i < JOINT_NUM; i++)
 	{
 		FinalBoneLocations[i] = FVector(-JointPosition[i].x, JointPosition[i].z, JointPosition[i].y);
-		FVector UnrealJointRotation = FVector(-JointRotations[i].x, JointRotations[i].z, JointRotations[i].y);
+
+		glm::mat4 XYZRotMatrix = glm::eulerAngleXYZ(JointRotations[i].x, -JointRotations[i].y, JointRotations[i].z);
+		
+		glm::vec3 eulerXZY;
+		glm::extractEulerAngleXZY(XYZRotMatrix, eulerXZY.x, eulerXZY.y, eulerXZY.z);
+
+		FVector UnrealJointRotation = FVector(eulerXZY.x, -eulerXZY.z, eulerXZY.y);
 		FinalBoneRotations[i] = FQuat(FQuat::MakeFromEuler(FVector::RadiansToDegrees(UnrealJointRotation))); //Flip YZ...  @TODO DEBUG AND PROPERLY FLIP
+
 	}
 	
 	//Phase update
@@ -301,8 +307,6 @@ void FAnimNode_PFNN::Initialize_AnyThread(const FAnimationInitializeContext& arg
 {
 	FAnimNode_Base::Initialize_AnyThread(arg_Context);
 	
-	EvaluateGraphExposedInputs.Execute(arg_Context);
-
 	PFNNAnimInstance = GetPFNNInstanceFromContext(arg_Context);
 	if (!PFNNAnimInstance) 
 	{
@@ -318,8 +322,6 @@ void FAnimNode_PFNN::Update_AnyThread(const FAnimationUpdateContext& arg_Context
 	{
 		LoadData();
 	}
-
-	EvaluateGraphExposedInputs.Execute(arg_Context);
 
 	if (PFNNAnimInstance) 
 	{
@@ -351,26 +353,13 @@ void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 			}
 			else
 			{	//Conversion to LocalSpace (hopefully)
-				
 				FTransform CurrentBoneTransform = FTransform(FinalBoneRotations[CurrentBoneIndex.GetInt()], FinalBoneLocations[CurrentBoneIndex.GetInt()], FVector::OneVector);
 				FTransform ParentBoneTransform = FTransform(FinalBoneRotations[ParentBoneIndex.GetInt()], FinalBoneLocations[ParentBoneIndex.GetInt()], FVector::OneVector);
 
 				FTransform LocalBoneTransform = CurrentBoneTransform.GetRelativeTransform(ParentBoneTransform);
+				//LocalBoneTransform.SetLocation(LocalBoneTransform.GetRotation().Inverse() * LocalBoneTransform.GetLocation());
 
 				arg_Output.Pose[CurrentBoneIndex].SetComponents(LocalBoneTransform.GetRotation(), LocalBoneTransform.GetLocation(), LocalBoneTransform.GetScale3D());
-
-				////GetInverse of parent rotation
-				//FQuat ParentInverse = FinalBoneRotations[ParentBoneIndex.GetInt()].Inverse();
-
-				////Calculate Local Rotation
-				//FQuat LocalRotation = ParentInverse * FinalBoneRotations[CurrentBoneIndex.GetInt()];
-
-				////Calculate Local Rotation
-				//FVector LocalTranslation = FinalBoneLocations[i] - FinalBoneLocations[ParentBoneIndex.GetInt()];
-				//
-				////APPLY Local Rotations and Locations
-				//arg_Output.Pose[CurrentBoneIndex].SetRotation(LocalRotation);
-				//arg_Output.Pose[CurrentBoneIndex].SetLocation(ParentInverse * LocalTranslation);
 			}
 		}
 		arg_Output.Pose.NormalizeRotations();

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ModuleManager.h"
+#include "Modules/ModuleManager.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(PFNNAnimationModuleLog, All, All);
 
@@ -13,5 +13,4 @@ public:
 
 	/* This will get called when the editor unloads the module */
 	virtual void ShutdownModule() override;
-
 };
