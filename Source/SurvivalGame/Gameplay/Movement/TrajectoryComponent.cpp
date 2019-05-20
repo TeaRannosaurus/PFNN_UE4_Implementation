@@ -25,7 +25,7 @@ UTrajectoryComponent::UTrajectoryComponent(): ExtraStrafeSmooth(0), ExtraGaitSmo
 	PrimaryComponentTick.bCanEverTick = true;
 
 	Width = 25.0f;
-	TargetDirection = glm::vec3(0,0,1);
+	TargetDirection = glm::vec3(0.0f,0.0f,1.0f);
 	ExtraVelocitySmooth	= 0.9f;
 	ExtraStrafeVelocity	= 0.9f;
 	ExtraDirectionSmooth= 0.9f;
@@ -41,9 +41,9 @@ UTrajectoryComponent::UTrajectoryComponent(): ExtraStrafeSmooth(0), ExtraGaitSmo
 
 	for (int i = 0; i < LENGTH; i++)
 	{
-		Positions[i] = glm::vec3(0, 0, 0);
-		Rotations[i] = glm::mat4(1);
-		Directions[i] = glm::vec3(0, 0, 1);
+		Positions[i] = glm::vec3(0.0f, 0.0f, 0.0f);
+		Rotations[i] = glm::mat4(1.0f);
+		Directions[i] = glm::vec3(0.0f, 0.0f, 1.0f);
 		Heights[i]	= 0.0f;
 		GaitJog[i]	= 0.0f;
 		GaitWalk[i] = 0.0f;
@@ -52,7 +52,7 @@ UTrajectoryComponent::UTrajectoryComponent(): ExtraStrafeSmooth(0), ExtraGaitSmo
 		GaitStand[i]= 0.0f;
 	}
 
-	CurrentFrameInput = glm::vec2(0);
+	CurrentFrameInput = glm::vec2(0.0f);
 
 	OwnerPawn = nullptr;
 
@@ -156,7 +156,7 @@ void UTrajectoryComponent::TickGaits()
 void UTrajectoryComponent::PredictFutureTrajectory()
 {
 	//Predicting future trajectory
-	glm::vec3 TrajectoryPositionsBlend[LENGTH] = { glm::vec3(0) };
+	glm::vec3 TrajectoryPositionsBlend[LENGTH] = { glm::vec3(0.0f) };
 	TrajectoryPositionsBlend[LENGTH / 2] = Positions[LENGTH / 2];
 
 	for (int i = LENGTH / 2 + 1; i < LENGTH; i++)
@@ -194,7 +194,7 @@ void UTrajectoryComponent::TickRotations()
 {
 	for (int i = 0; i < LENGTH; i++)
 	{
-		Rotations[i] = glm::mat3(glm::rotate(atan2f(Directions[i].x, Directions[i].z), glm::vec3(0, 1, 0)));
+		Rotations[i] = glm::mat3(glm::rotate(atan2f(Directions[i].x, Directions[i].z), glm::vec3(0.0f, 1.0f, 0.0f)));
 	}
 }
 
@@ -208,7 +208,7 @@ void UTrajectoryComponent::TickHeights()
 		TraceParams.bTraceAsyncScene = true;
 		TraceParams.bReturnPhysicalMaterial = false;
 
-		const float DistanceLenght = 10000;
+		const float DistanceLenght = 10000.0f;
 		FHitResult HitResult(ForceInit);
 		GetWorld()->LineTraceSingleByChannel(HitResult, GetOwner()->GetActorLocation(), -FVector::UpVector * DistanceLenght, ECC_Pawn, TraceParams);
 
@@ -242,10 +242,10 @@ void UTrajectoryComponent::UpdatePastTrajectory()
 glm::vec3 UTrajectoryComponent::MixDirections(const glm::vec3 arg_XDirection, const glm::vec3 arg_YDirection,
 	const float arg_Scalar)
 {
-	const glm::quat XQuat = glm::angleAxis(atan2f(arg_XDirection.x, arg_XDirection.y), glm::vec3(0, 0, 1));
-	const glm::quat YQuat = glm::angleAxis(atan2f(arg_YDirection.x, arg_YDirection.y), glm::vec3(0, 0, 1));
+	const glm::quat XQuat = glm::angleAxis(atan2f(arg_XDirection.x, arg_XDirection.y), glm::vec3(0.0f, 0.0f, 1.0f));
+	const glm::quat YQuat = glm::angleAxis(atan2f(arg_YDirection.x, arg_YDirection.y), glm::vec3(0.0f, 0.0f, 1.0f));
 	const glm::quat ZQuat = glm::slerp(XQuat, YQuat, arg_Scalar);
-	return ZQuat * glm::vec3(0, 1, 0);
+	return ZQuat * glm::vec3(0.0f, 1.0f, 0.0f);
 }
 
 
@@ -322,41 +322,38 @@ void UTrajectoryComponent::LogTrajectoryData(int arg_FrameCount)
 
 void UTrajectoryComponent::TickTrajectory()
 {
+
 	auto BaseCharacter = Cast<ABaseCharacter>(GetOwner());
 	if (BaseCharacter) 
 	{
 		auto MovementComponent = BaseCharacter->GetMovementComponent();
-		CurrentFrameInput = glm::vec2(-MovementComponent->Velocity.X*0.01f, MovementComponent->Velocity.Y*0.01f);
+		CurrentFrameInput = glm::vec2(-MovementComponent->Velocity.X, -MovementComponent->Velocity.Y);
 		CurrentFrameInput = glm::normalize(CurrentFrameInput);
 	}
 
 	if (glm::abs(CurrentFrameInput.x) + glm::abs(CurrentFrameInput.y) < 0.305f)
 	{
-		CurrentFrameInput = glm::vec2(0);
+		CurrentFrameInput = glm::vec2(0.0f);
 	}
 
 	glm::vec3 TrajectoryTargetDirectionNew = glm::normalize(glm::vec3(-GetOwner()->GetActorForwardVector().X, 0.0f, GetOwner()->GetActorForwardVector().Y));
 	const glm::mat3 TrajectoryTargetRotation = glm::mat3(glm::rotate(atan2f(
 		TrajectoryTargetDirectionNew.x,
-		TrajectoryTargetDirectionNew.z), glm::vec3(0, 1, 0)));
-
+		TrajectoryTargetDirectionNew.z), glm::vec3(0.0f, 1.0f, 0.0f)));
 
 	//CurrentFrameInput.x = 1;
 	const float TargetVelocitySpeed = OwnerPawn->GetVelocity().SizeSquared() / (OwnerPawn->GetMovementComponent()->GetMaxSpeed() * OwnerPawn->GetMovementComponent()->GetMaxSpeed()) * 7.5f; //7.5 is current training walking speed
 
 	const glm::vec3 TrajectoryTargetVelocityNew = TargetVelocitySpeed * (TrajectoryTargetRotation * glm::vec3(CurrentFrameInput.x, 0, CurrentFrameInput.y));
 	TargetVelocity = glm::mix(TargetVelocity, TrajectoryTargetVelocityNew, ExtraVelocitySmooth);
-	TargetVelocity = glm::vec3(1, 0, 0);
 	StrafeAmount = glm::mix(StrafeAmount, StrafeTarget, ExtraStrafeSmooth);
 	const glm::vec3 TrajectoryTargetVelocityDirection = glm::length(TargetVelocity) < 1e-05 ? TargetDirection : glm::normalize(TargetVelocity);
 	TrajectoryTargetDirectionNew = MixDirections(TrajectoryTargetVelocityDirection, TrajectoryTargetDirectionNew, StrafeAmount);
 	TargetDirection = MixDirections(TargetDirection, TrajectoryTargetDirectionNew, ExtraDirectionSmooth);
 
-	DrawDebugDirectionalArrow(GetWorld(), GetOwner()->GetActorLocation(), GetOwner()->GetActorLocation() + FVector(TrajectoryTargetDirectionNew.x, TrajectoryTargetDirectionNew.z, TrajectoryTargetDirectionNew.y) * 100, 0.0f, FColor::Green, false, -1, 0, 2);
-	DrawDebugDirectionalArrow(GetWorld(), GetOwner ()->GetActorLocation(), GetOwner()->GetActorLocation() + FVector(TrajectoryTargetDirectionNew.x, TrajectoryTargetDirectionNew.z, TrajectoryTargetDirectionNew.y) * 100, 0.0f, FColor::Blue, false, -1, 0, 2);
-
-	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::White, FString::Printf(TEXT("x: %f y: %f Current frame input"), CurrentFrameInput.x, CurrentFrameInput.y));
-	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Green, FString::Printf(TEXT("x: %f y: %f z: %f TrajectoryTargetDirectionNew"), TrajectoryTargetDirectionNew.x, TrajectoryTargetDirectionNew.y, TrajectoryTargetDirectionNew.z));
+	DrawDebugDirectionalArrow(GetWorld(), GetOwner ()->GetActorLocation(), GetOwner()->GetActorLocation() + FVector(-TrajectoryTargetDirectionNew.x, TrajectoryTargetDirectionNew.z, TrajectoryTargetDirectionNew.y) * 100.0f, 0.0f, FColor::Blue, false, -1, 0, 2);
+	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::White, FString::Printf(TEXT("x: %f y: %f Current frame input"), -CurrentFrameInput.x, CurrentFrameInput.y));
+	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Green, FString::Printf(TEXT("x: %f y: %f z: %f TrajectoryTargetDirectionNew"), -TrajectoryTargetDirectionNew.x, TrajectoryTargetDirectionNew.z, TrajectoryTargetDirectionNew.y));
 	DrawDebugDirectionalArrow(GetWorld(), GetOwner()->GetActorLocation(), GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 150, 10.0f, FColor::Red, false, -1, 0, 5);
 	DrawDebugDirectionalArrow(GetWorld(), GetOwner()->GetActorLocation(), GetOwner()->GetActorLocation() + FVector(-CurrentFrameInput.x, CurrentFrameInput.y, 0.0f) * 100, 10.0f, FColor::White, false, -1, 0, 2);
 
@@ -375,17 +372,17 @@ void UTrajectoryComponent::DrawDebugTrajectory()
 
 	for (size_t i = 0; i < LENGTH; i++)
 	{
-			FVector DebugLocation = (FVector(Positions[i].x, Positions[i].z, Positions[i].y) * 100.0f) + GetOwner()->GetActorLocation();
+			FVector DebugLocation = (FVector(-Positions[i].x, Positions[i].z, Positions[i].y) * 100.0f) + GetOwner()->GetActorLocation();
 			DrawDebugPoint(GetWorld(), DebugLocation, 4.0f,FColor::Red);
 
-			FVector Ue4Direction = FVector(Directions[i].x, Directions[i].y, Directions[i].z) * 10.0f;
+			FVector Ue4Direction = FVector(-Directions[i].x, Directions[i].z, Directions[i].y) * 50.0f;
 			FVector DirectionLocation = DebugLocation + Ue4Direction;
-			DrawDebugLine(GetWorld(), DebugLocation, DirectionLocation, FColor::Black, false, -1.0f, 0, 3.f);
+			DrawDebugDirectionalArrow(GetWorld(), DebugLocation, DirectionLocation, 25.0f, FColor::Black, false, -1.0f, 0, 3.f);
 	}
 
-	FVector DebugStartingPoint = FVector(StartingPoint.x, StartingPoint.z, StartingPoint.y) + GetOwner()->GetActorLocation();
-	FVector DebugMidPoint = FVector(MidPoint.x, MidPoint.z, MidPoint.y) + GetOwner()->GetActorLocation();
-	FVector DebugEndPoint = FVector(EndingPoint.x, EndingPoint.z, EndingPoint.y) + GetOwner()->GetActorLocation();
+	FVector DebugStartingPoint = FVector(-StartingPoint.x, StartingPoint.z, StartingPoint.y) + GetOwner()->GetActorLocation();
+	FVector DebugMidPoint = FVector(-MidPoint.x, MidPoint.z, MidPoint.y) + GetOwner()->GetActorLocation();
+	FVector DebugEndPoint = FVector(-EndingPoint.x, EndingPoint.z, EndingPoint.y) + GetOwner()->GetActorLocation();
 
 	DrawDebugPoint(GetWorld(), DebugStartingPoint, 10.0f, FColor::Red);
 	DrawDebugPoint(GetWorld(), DebugMidPoint, 10.0f, FColor::Red);
