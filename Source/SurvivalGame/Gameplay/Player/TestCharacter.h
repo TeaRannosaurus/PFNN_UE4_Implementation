@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Gameplay/Player/BaseCharacter.h"
+#include "PFNNAnimation/Core/Character/PFNNCharacter.h"
 #include "TestCharacter.generated.h"
 
 USTRUCT(BlueprintType)
@@ -19,7 +19,7 @@ struct SURVIVALGAME_API FWaypoint
  * 
  */
 UCLASS()
-class SURVIVALGAME_API ATestCharacter : public ABaseCharacter
+class SURVIVALGAME_API ATestCharacter : public APFNNCharacter
 {
 	GENERATED_BODY()
 	// Called when the game starts or when spawned
@@ -31,8 +31,6 @@ public:
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	class UTrajectoryComponent* GetTrajectoryComponent();
 
 protected:
 
@@ -57,9 +55,5 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "True"))
 	TArray<FWaypoint> Waypoints;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "True"))
-	class UTrajectoryComponent* TrajectoryComponent;
-
 
 };

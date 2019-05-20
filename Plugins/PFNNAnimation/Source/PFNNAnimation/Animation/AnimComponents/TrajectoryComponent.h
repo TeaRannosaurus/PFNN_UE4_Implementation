@@ -4,12 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+
 #include "ThirdParty/glm/glm.hpp"
+
 #include "TrajectoryComponent.generated.h"
 
 
 UCLASS(BlueprintType)
-class SURVIVALGAME_API UTrajectoryComponent : public UActorComponent
+class PFNNANIMATION_API UTrajectoryComponent : public UActorComponent
 {
 	GENERATED_BODY()
 

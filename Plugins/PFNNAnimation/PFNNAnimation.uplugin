@@ -18,6 +18,11 @@
         "Name": "PFNNAnimation",
         "Type": "Developer",
         "LoadingPhase": "PreDefault"
+      },
+      {
+        "Name": "PFNNAnimationEditor",
+        "Type": "Developer",
+        "LoadingPhase": "PreDefault"
       }
     ]
 }

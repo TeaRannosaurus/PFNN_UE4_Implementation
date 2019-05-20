@@ -1,17 +1,18 @@
 // Copyright 2018 Sticks & Stones. All Rights Reserved.
 
 #include "AnimNode_PFNN.h"
-#include "PFNNAnimInstance.h"
-#include "Gameplay/Movement/TrajectoryComponent.h"
 
+#include "Animation/AnimInstances/PFNNAnimInstance.h"
+#include "Animation/AnimComponents/TrajectoryComponent.h"
 #include "AnimInstanceProxy.h"
-#include "MachineLearning/PhaseFunctionNeuralNetwork.h"
+#include "Animation/PFNN/PhaseFunctionNeuralNetwork.h"
 #include "PlatformFilemanager.h"
 #include "DrawDebugHelpers.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
-#include <ThirdParty/glm/gtx/transform.inl>
+#include <ThirdParty/glm/gtx/transform.hpp>
 #include <ThirdParty/glm/gtx/euler_angles.hpp>
+
 #include <fstream>
 #include "Engine/Engine.h"
 
@@ -33,13 +34,13 @@ void FAnimNode_PFNN::LoadXForms()
 	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 
 	const FString RelativePath = FPaths::ProjectDir();
-	const FString FullPathParents = RelativePath + FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/character_parents.bin"));
-	const FString FullPathXforms = RelativePath + FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/character_xforms.bin"));
+	const FString FullPathParents = RelativePath + FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/character_parents.bin"));
+	const FString FullPathXforms = RelativePath + FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/character_xforms.bin"));
 
 	IFileHandle* FileHandle = PlatformFile.OpenRead(*FullPathParents);
 	if (FileHandle == nullptr)
 	{
-		UE_LOG(PFNN_Logging, Fatal, TEXT("Fatal error, Failed to load charater parents"));
+		UE_LOG(PFNN_Logging, Error, TEXT("Fatal error, Failed to load charater parents"));
 		return;
 	}
 	float JointParentsFloat[JOINT_NUM];

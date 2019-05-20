@@ -10,11 +10,11 @@ public class SurvivalGame : ModuleRules
 	    bEnableExceptions = true;
         MinFilesUsingPrecompiledHeaderOverride = 1;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "AIModule", "UMG", "Slate", "SlateCore" });
+        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "AIModule", "UMG", "Slate", "SlateCore", "PFNNAnimation" });
 
 	    if(Target.Type == TargetType.Editor)
 	    {
-	        PublicDependencyModuleNames.AddRange(new string[] { "PFNNAnimation", "AnimGraph", "BlueprintGraph" });
+	        PublicDependencyModuleNames.AddRange(new string[] { "PFNNAnimationEditor", "AnimGraph", "BlueprintGraph" });
 	    }
 
     }

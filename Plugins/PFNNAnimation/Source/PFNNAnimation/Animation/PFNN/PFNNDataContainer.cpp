@@ -39,10 +39,10 @@ void UPFNNDataContainer::LoadNetworkData(const EPFNNMode arg_Mode)
 	UE_LOG(PFNN_Logging, Log, TEXT("Loading PFNN Data..."));
 
 	//TODO: Look into Asynchronous Asset Loading -Elwin
-	LoadWeights(Xmean, XDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/Xmean.bin")));
-	LoadWeights(Xstd, XDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/Xstd.bin")));
-	LoadWeights(Ymean, YDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/Ymean.bin")));
-	LoadWeights(Ystd, YDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/Ystd.bin")));
+	LoadWeights(Xmean, XDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/Xmean.bin")));
+	LoadWeights(Xstd, XDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/Xstd.bin")));
+	LoadWeights(Ymean, YDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/Ymean.bin")));
+	LoadWeights(Ystd, YDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/Ystd.bin")));
 
 	switch (arg_Mode)
 	{
@@ -53,12 +53,12 @@ void UPFNNDataContainer::LoadNetworkData(const EPFNNMode arg_Mode)
 
 		for (int i = 0; i < 50; i++)
 		{
-			LoadWeights(W0[i], HDIM, XDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W0_%03d.bin"), i));
-			LoadWeights(W1[i], HDIM, HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W1_%03d.bin"), i));
-			LoadWeights(W2[i], YDIM, HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W2_%03d.bin"), i));
-			LoadWeights(b0[i], HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b0_%03d.bin"), i));
-			LoadWeights(b1[i], HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b1_%03d.bin"), i));
-			LoadWeights(b2[i], YDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b2_%03d.bin"), i));
+			LoadWeights(W0[i], HDIM, XDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W0_%03d.bin"), i));
+			LoadWeights(W1[i], HDIM, HDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W1_%03d.bin"), i));
+			LoadWeights(W2[i], YDIM, HDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W2_%03d.bin"), i));
+			LoadWeights(b0[i], HDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b0_%03d.bin"), i));
+			LoadWeights(b1[i], HDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b1_%03d.bin"), i));
+			LoadWeights(b2[i], YDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b2_%03d.bin"), i));
 		}
 
 		break;
@@ -70,12 +70,12 @@ void UPFNNDataContainer::LoadNetworkData(const EPFNNMode arg_Mode)
 
 		for (int i = 0; i < 10; i++)
 		{
-			LoadWeights(W0[i], HDIM, XDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W0_%03d.bin"), i * 5));
-			LoadWeights(W1[i], HDIM, HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W1_%03d.bin"), i * 5));
-			LoadWeights(W2[i], YDIM, HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W2_%03d.bin"), i * 5));
-			LoadWeights(b0[i], HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b0_%03d.bin"), i * 5));
-			LoadWeights(b1[i], HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b1_%03d.bin"), i * 5));
-			LoadWeights(b2[i], YDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b2_%03d.bin"), i * 5));
+			LoadWeights(W0[i], HDIM, XDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W0_%03d.bin"), i * 5));
+			LoadWeights(W1[i], HDIM, HDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W1_%03d.bin"), i * 5));
+			LoadWeights(W2[i], YDIM, HDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W2_%03d.bin"), i * 5));
+			LoadWeights(b0[i], HDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b0_%03d.bin"), i * 5));
+			LoadWeights(b1[i], HDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b1_%03d.bin"), i * 5));
+			LoadWeights(b2[i], YDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b2_%03d.bin"), i * 5));
 		}
 
 		break;
@@ -87,12 +87,12 @@ void UPFNNDataContainer::LoadNetworkData(const EPFNNMode arg_Mode)
 
 		for (int i = 0; i < 4; i++)
 		{
-			LoadWeights(W0[i], HDIM, XDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W0_%03i.bin"), static_cast<int>(i * 12.5)));
-			LoadWeights(W1[i], HDIM, HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W1_%03i.bin"), static_cast<int>(i * 12.5)));
-			LoadWeights(W2[i], YDIM, HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W2_%03i.bin"), static_cast<int>(i * 12.5)));
-			LoadWeights(b0[i], HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b0_%03i.bin"), static_cast<int>(i * 12.5)));
-			LoadWeights(b1[i], HDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b1_%03i.bin"), static_cast<int>(i * 12.5)));
-			LoadWeights(b2[i], YDIM, FString::Printf(TEXT("Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b2_%03i.bin"), static_cast<int>(i * 12.5)));
+			LoadWeights(W0[i], HDIM, XDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W0_%03i.bin"), static_cast<int>(i * 12.5)));
+			LoadWeights(W1[i], HDIM, HDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W1_%03i.bin"), static_cast<int>(i * 12.5)));
+			LoadWeights(W2[i], YDIM, HDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/W2_%03i.bin"), static_cast<int>(i * 12.5)));
+			LoadWeights(b0[i], HDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b0_%03i.bin"), static_cast<int>(i * 12.5)));
+			LoadWeights(b1[i], HDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b1_%03i.bin"), static_cast<int>(i * 12.5)));
+			LoadWeights(b2[i], YDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/b2_%03i.bin"), static_cast<int>(i * 12.5)));
 		}
 
 		break;

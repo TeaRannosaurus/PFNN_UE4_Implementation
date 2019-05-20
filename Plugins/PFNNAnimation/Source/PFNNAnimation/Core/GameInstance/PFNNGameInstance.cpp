@@ -2,7 +2,7 @@
 
 #include "PFNNGameInstance.h"
 
-#include "MachineLearning/PFNNDataContainer.h"
+#include "Animation/PFNN/PFNNDataContainer.h"
 
 UPFNNGameInstance::UPFNNGameInstance(const FObjectInitializer& arg_ObjectInitializer) : Super(arg_ObjectInitializer) 
 {

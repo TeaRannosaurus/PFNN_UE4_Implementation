@@ -3,14 +3,12 @@
 #include "TestCharacter.h"
 
 #include "DrawDebugHelpers.h"
-#include "Gameplay/Movement/TrajectoryComponent.h"
 
-ATestCharacter::ATestCharacter(): TrajectoryComponent(nullptr)
+ATestCharacter::ATestCharacter()
 {
 	CurrentIndex = 0;
 	RequiredDistanceToWaypoint = 100.f;
 
-	TrajectoryComponent = CreateDefaultSubobject<UTrajectoryComponent>(TEXT("TrajectoryComponent"));
 }
 
 void ATestCharacter::BeginPlay()
@@ -33,11 +31,6 @@ void ATestCharacter::Tick(float DeltaTime)
 
 	MoveBetweenTargets();
 	DebugWaypoints();
-}
-
-UTrajectoryComponent* ATestCharacter::GetTrajectoryComponent() 
-{
-	return TrajectoryComponent;
 }
 
 void ATestCharacter::MoveBetweenTargets() 

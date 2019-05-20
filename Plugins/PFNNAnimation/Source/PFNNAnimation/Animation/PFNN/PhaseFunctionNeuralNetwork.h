@@ -22,7 +22,7 @@ enum class EPFNNMode : uint8
  * 
  */
 UCLASS(Config=Engine, defaultconfig, meta=(DisplayName="PFNN Settings"))
-class SURVIVALGAME_API UPhaseFunctionNeuralNetwork : public UDeveloperSettings
+class PFNNANIMATION_API UPhaseFunctionNeuralNetwork : public UDeveloperSettings
 {
 public:
 	GENERATED_BODY()

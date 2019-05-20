@@ -6,7 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GenericPlatformFile.h"
 #include "PFNNDataContainer.h"
-#include "Core/PFNNGameInstance.h"
+#include "Core/GameInstance/PFNNGameInstance.h"
 
 DEFINE_LOG_CATEGORY(PFNN_Logging);
 

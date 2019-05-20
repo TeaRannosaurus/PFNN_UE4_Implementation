@@ -10,7 +10,7 @@
  * 
  */
 UCLASS()
-class SURVIVALGAME_API UPFNNGameInstance : public UGameInstance
+class PFNNANIMATION_API UPFNNGameInstance : public UGameInstance
 {
 	GENERATED_BODY()
 

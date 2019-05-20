@@ -2,16 +2,19 @@
 
 #include "TrajectoryComponent.h"
 
-#include "Gameplay/Player/BaseCharacter.h"
+#include "PFNNAnimation/Core/Character/PFNNCharacter.h"
 
-#include <ThirdParty/glm/gtx/transform.inl>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <ThirdParty/glm/gtx/transform.hpp>
+
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/World.h"
-#include <ThirdParty/glm/ext/quaternion_trigonometric.inl>
-#include <ThirdParty/glm/ext/quaternion_common.inl>
+
+#include <ThirdParty/glm/ext/quaternion_trigonometric.hpp>
+#include <ThirdParty/glm/ext/quaternion_common.hpp>
 #include <ThirdParty/glm/detail/type_quat.hpp>
-#include "DrawDebugHelpers.h"
+
 
 #include <fstream>
 
@@ -322,10 +325,10 @@ void UTrajectoryComponent::LogTrajectoryData(int arg_FrameCount)
 void UTrajectoryComponent::TickTrajectory()
 {
 
-	auto BaseCharacter = Cast<ABaseCharacter>(GetOwner());
-	if (BaseCharacter) 
+	auto PFNNCharacter = Cast<APFNNCharacter>(GetOwner());
+	if (PFNNCharacter)
 	{
-		auto MovementComponent = BaseCharacter->GetMovementComponent();
+		auto MovementComponent = PFNNCharacter->GetMovementComponent();
 		CurrentFrameInput = glm::vec2(-MovementComponent->Velocity.X, -MovementComponent->Velocity.Y);
 		CurrentFrameInput = glm::normalize(CurrentFrameInput);
 	}

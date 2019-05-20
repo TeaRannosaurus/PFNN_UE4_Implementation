@@ -1,14 +1,11 @@
 // Copyright 2018 Sticks & Stones. All Rights Reserved.
 
 #pragma once
-#define GLM_ENABLE_EXPERIMENTAL
-
 
 #include "CoreMinimal.h"
 #include "Animation/AnimNodeBase.h"
-#include <ThirdParty/glm/vec3.hpp>
-#include <ThirdParty/glm/mat4x4.hpp>
-#include <ThirdParty/glm/gtx/quaternion.hpp>
+
+#include "ThirdParty/glm/glm.hpp"
 
 #include "AnimNode_PFNN.generated.h"
 
@@ -66,7 +63,7 @@ class UPhaseFunctionNeuralNetwork;
  * 
  */
 USTRUCT(BlueprintInternalUseOnly)
-struct SURVIVALGAME_API FAnimNode_PFNN : public FAnimNode_Base
+struct PFNNANIMATION_API FAnimNode_PFNN : public FAnimNode_Base
 {
 	GENERATED_USTRUCT_BODY()
 

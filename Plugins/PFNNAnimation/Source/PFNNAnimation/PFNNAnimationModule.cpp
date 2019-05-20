@@ -6,12 +6,12 @@ DEFINE_LOG_CATEGORY(PFNNAnimationModuleLog);
 
 void PFNNAnimationModule::StartupModule()
 {
-	UE_LOG(PFNNAnimationModuleLog, Warning, TEXT("PFNNAnimationModule module has started!"));
+	UE_LOG(PFNNAnimationModuleLog, Log, TEXT("PFNNAnimationModule module has started!"));
 }
 
 void PFNNAnimationModule::ShutdownModule()
 {
-	UE_LOG(PFNNAnimationModuleLog, Warning, TEXT("PFNNAnimationModule module has shut down"));
+	UE_LOG(PFNNAnimationModuleLog, Log, TEXT("PFNNAnimationModule module has shut down"));
 }
 
 #undef LOCTEXT_NAMESPACE

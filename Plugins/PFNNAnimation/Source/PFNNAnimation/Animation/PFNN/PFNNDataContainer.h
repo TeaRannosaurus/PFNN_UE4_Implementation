@@ -17,7 +17,7 @@ class UPhaseFunctionNeuralNetwork;
  * 
  */
 UCLASS()
-class SURVIVALGAME_API UPFNNDataContainer : public UObject
+class PFNNANIMATION_API UPFNNDataContainer : public UObject
 {
 	GENERATED_BODY()
 
