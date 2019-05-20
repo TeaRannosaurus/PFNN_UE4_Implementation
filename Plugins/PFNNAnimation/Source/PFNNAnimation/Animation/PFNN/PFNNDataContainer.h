@@ -36,12 +36,24 @@ public:
 	* @Param[out] arg_PFNN, The object that will recieve the data
 	*/
 	void GetNetworkData(UPhaseFunctionNeuralNetwork& arg_PFNN);
+	
 	bool IsDataLoaded() const;
+
+	bool IsBeingLoaded() const;
+
+	void SetIsBeingLoaded(bool arg_IsLoaded);
+
+	FCriticalSection* GetDataLocker();
 
 private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "True"))
 	bool bIsDataLoaded;
+
+	UPROPERTY()
+	bool bIsCurrentlyLoading;
+
+	EPFNNMode LoadingMode;
 
 	/*
 	* @Description Load weights for the Phase Function Neural Network
@@ -73,6 +85,10 @@ private:
 	Eigen::ArrayXXf W0p, W1p, W2p;
 	Eigen::ArrayXf  b0p, b1p, b2p;
 	//Ending of things that you should not change.
+
+	//Mutex for ensuring ThreadSafety of the DataContainer
+	FCriticalSection DataLocker;
+
 };
 
 class FPFNNDataLoader : public FNonAbandonableTask

@@ -70,9 +70,13 @@ void FAnimNode_PFNN::LoadXForms()
 
 void FAnimNode_PFNN::LoadPFNN()
 {
-	if((PFNN == nullptr || !bIsPFNNLoaded) && Trajectory)
+
+	if(!bIsPFNNLoaded && Trajectory)
 	{
-		PFNN = NewObject<UPhaseFunctionNeuralNetwork>();
+		if (PFNN == nullptr)
+		{
+			PFNN = NewObject<UPhaseFunctionNeuralNetwork>();
+		}
 		bIsPFNNLoaded = PFNN->LoadNetworkData(Trajectory->GetOwner());
 	}
 }
@@ -337,40 +341,43 @@ void FAnimNode_PFNN::Update_AnyThread(const FAnimationUpdateContext& arg_Context
 
 void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 {
-	const FTransform& CharacterTransform = arg_Output.AnimInstanceProxy->GetActorTransform();
-	if (FinalBoneLocations.Num() >= JOINT_NUM && FinalBoneRotations.Num() >= JOINT_NUM) 
+	if (bIsPFNNLoaded)
 	{
-		auto Bones = arg_Output.Pose.GetBoneContainer();
-
-		for (int32 i = 0; i < JOINT_NUM; i++)
+		const FTransform& CharacterTransform = arg_Output.AnimInstanceProxy->GetActorTransform();
+		if (FinalBoneLocations.Num() >= JOINT_NUM && FinalBoneRotations.Num() >= JOINT_NUM)
 		{
-			const FCompactPoseBoneIndex CurrentBoneIndex(i);
-			const FCompactPoseBoneIndex ParentBoneIndex(Bones.GetParentBoneIndex(CurrentBoneIndex));
+			auto Bones = arg_Output.Pose.GetBoneContainer();
 
-			if (ParentBoneIndex.GetInt() == -1)
-			{	//Root Bone No conversion needed
-				arg_Output.Pose[CurrentBoneIndex].SetRotation(FinalBoneRotations[CurrentBoneIndex.GetInt()]);
-				arg_Output.Pose[CurrentBoneIndex].SetLocation(FinalBoneLocations[CurrentBoneIndex.GetInt()]);
+			for (int32 i = 0; i < JOINT_NUM; i++)
+			{
+				const FCompactPoseBoneIndex CurrentBoneIndex(i);
+				const FCompactPoseBoneIndex ParentBoneIndex(Bones.GetParentBoneIndex(CurrentBoneIndex));
+
+				if (ParentBoneIndex.GetInt() == -1)
+				{	//Root Bone No conversion needed
+					arg_Output.Pose[CurrentBoneIndex].SetRotation(FinalBoneRotations[CurrentBoneIndex.GetInt()]);
+					arg_Output.Pose[CurrentBoneIndex].SetLocation(FinalBoneLocations[CurrentBoneIndex.GetInt()]);
+				}
+				else
+				{	//Conversion to LocalSpace (hopefully)
+					FTransform CurrentBoneTransform = FTransform(FinalBoneRotations[CurrentBoneIndex.GetInt()], FinalBoneLocations[CurrentBoneIndex.GetInt()], FVector::OneVector);
+					FTransform ParentBoneTransform = FTransform(FinalBoneRotations[ParentBoneIndex.GetInt()], FinalBoneLocations[ParentBoneIndex.GetInt()], FVector::OneVector);
+
+					FTransform LocalBoneTransform = CurrentBoneTransform.GetRelativeTransform(ParentBoneTransform);
+					//LocalBoneTransform.SetLocation(LocalBoneTransform.GetRotation().Inverse() * LocalBoneTransform.GetLocation());
+
+					arg_Output.Pose[CurrentBoneIndex].SetComponents(LocalBoneTransform.GetRotation(), LocalBoneTransform.GetLocation(), LocalBoneTransform.GetScale3D());
+				}
 			}
-			else
-			{	//Conversion to LocalSpace (hopefully)
-				FTransform CurrentBoneTransform = FTransform(FinalBoneRotations[CurrentBoneIndex.GetInt()], FinalBoneLocations[CurrentBoneIndex.GetInt()], FVector::OneVector);
-				FTransform ParentBoneTransform = FTransform(FinalBoneRotations[ParentBoneIndex.GetInt()], FinalBoneLocations[ParentBoneIndex.GetInt()], FVector::OneVector);
+			arg_Output.Pose.NormalizeRotations();
 
-				FTransform LocalBoneTransform = CurrentBoneTransform.GetRelativeTransform(ParentBoneTransform);
-				//LocalBoneTransform.SetLocation(LocalBoneTransform.GetRotation().Inverse() * LocalBoneTransform.GetLocation());
-
-				arg_Output.Pose[CurrentBoneIndex].SetComponents(LocalBoneTransform.GetRotation(), LocalBoneTransform.GetLocation(), LocalBoneTransform.GetScale3D());
-			}
+			DrawDebugSkeleton(arg_Output);
+			DrawDebugBoneVelocity(arg_Output);
 		}
-		arg_Output.Pose.NormalizeRotations();
-
-		DrawDebugSkeleton(arg_Output);
-		DrawDebugBoneVelocity(arg_Output);
-	}
-	else 
-	{
-		UE_LOG(PFNN_Logging, Error, TEXT("PFNN results were not properly applied!"));
+		else
+		{
+			UE_LOG(PFNN_Logging, Error, TEXT("PFNN results were not properly applied!"));
+		}
 	}
 }
 

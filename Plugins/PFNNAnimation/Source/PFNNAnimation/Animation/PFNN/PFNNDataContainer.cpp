@@ -28,17 +28,20 @@ UPFNNDataContainer::~UPFNNDataContainer()
 	UE_LOG(PFNN_Logging, Log, TEXT("PFNN Data Container is being deconstructed..."));
 }
 
-void UPFNNDataContainer::LoadNetworkData(const EPFNNMode arg_Mode) 
+void UPFNNDataContainer::LoadNetworkData(EPFNNMode arg_Mode)
 {
-	if(bIsDataLoaded)
+	DataLocker.Lock();
+
+	if (bIsDataLoaded)
 	{
 		UE_LOG(PFNN_Logging, Log, TEXT("Attempted to load PFNN data but it was already loaded. Attempt has been skipped."));
+		bIsCurrentlyLoading = false;
+		DataLocker.Unlock();
 		return;
 	}
 
 	UE_LOG(PFNN_Logging, Log, TEXT("Loading PFNN Data..."));
 
-	//TODO: Look into Asynchronous Asset Loading -Elwin
 	LoadWeights(Xmean, XDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/Xmean.bin")));
 	LoadWeights(Xstd, XDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/Xstd.bin")));
 	LoadWeights(Ymean, YDIM, FString::Printf(TEXT("Plugins/PFNNAnimation/Content/MachineLearning/PhaseFunctionNeuralNetwork/Weights/Ymean.bin")));
@@ -99,7 +102,12 @@ void UPFNNDataContainer::LoadNetworkData(const EPFNNMode arg_Mode)
 	}
 
 	bIsDataLoaded = true;
+	bIsCurrentlyLoading = false;
+
+	DataLocker.Unlock();
+
 	UE_LOG(PFNN_Logging, Log, TEXT("Finished Loading PFNN Data"));
+
 }
 
 void UPFNNDataContainer::GetNetworkData(UPhaseFunctionNeuralNetwork& arg_PFNN)
@@ -191,6 +199,20 @@ bool UPFNNDataContainer::IsDataLoaded() const
 	return bIsDataLoaded;
 }
 
+bool UPFNNDataContainer::IsBeingLoaded() const
+{
+	return bIsCurrentlyLoading;
+}
+
+void UPFNNDataContainer::SetIsBeingLoaded(bool arg_IsLoading)
+{
+	bIsCurrentlyLoading = arg_IsLoading;
+}
+
+FCriticalSection* UPFNNDataContainer::GetDataLocker()
+{
+	return &DataLocker;
+}
 
 FPFNNDataLoader::FPFNNDataLoader(UPFNNDataContainer* arg_PFNNDataContainer) : PFNNDataContainer(arg_PFNNDataContainer)
 {

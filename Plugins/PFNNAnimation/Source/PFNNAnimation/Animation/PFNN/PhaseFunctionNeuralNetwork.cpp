@@ -40,23 +40,31 @@ bool UPhaseFunctionNeuralNetwork::LoadNetworkData(UObject* arg_ContextObject)
 	if (GameInstance) 
 	{
 		UPFNNDataContainer* DataContainer = GameInstance->GetPFNNDataContainer();
-		DataContainer->LoadNetworkData(Mode);
-		if (DataContainer->IsDataLoaded()) 
+		if (DataContainer->GetDataLocker()->TryLock()) //Successfull Lock means we aren't currently writing to the DataContainer and we can safely lock
 		{
-			DataContainer->GetNetworkData(*this);
-			return true;
+			if (!DataContainer->IsBeingLoaded())
+			{
+				if (DataContainer->IsDataLoaded())
+				{
+					DataContainer->GetNetworkData(*this);
+					DataContainer->GetDataLocker()->Unlock();
+					return true;
+				}
+				DataContainer->SetIsBeingLoaded(true);
+				GameInstance->LoadPFNNDataAsync();
+			}
+			else
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Green, TEXT("PFNN Files are being loaded..."));
+			}
+			DataContainer->GetDataLocker()->Unlock();
 		}
-		else 
-		{
-			return false;
-		}
-
 	}
 	else 
 	{
 		UE_LOG(PFNN_Logging, Error, TEXT("Invalid GameInstance for PFNN"));
-		return false;
 	}
+	return false;
 }
 
 void UPhaseFunctionNeuralNetwork::ELU(Eigen::ArrayXf& arg_X)
