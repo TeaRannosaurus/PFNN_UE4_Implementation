@@ -114,8 +114,10 @@ struct SURVIVALGAME_API FAnimNode_PFNN : public FAnimNode_Base
 		JOINT_NUM = 31
 	};
 
+	UPROPERTY()
 	class UPFNNAnimInstance* PFNNAnimInstance;
 
+	UPROPERTY()
 	UTrajectoryComponent* Trajectory = nullptr;
 
 	//LOG THESE VARIABLES
