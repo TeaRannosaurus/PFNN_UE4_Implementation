@@ -354,7 +354,11 @@ void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 				if (ParentBoneIndex.GetInt() == -1)
 				{	
 					//Do nothing first UE4 root bone skips
+<<<<<<< HEAD
 					arg_Output.Pose[CurrentBoneIndex].SetRotation(FQuat::MakeFromEuler(FVector::DegreesToRadians(FVector(90.0f, 0.0f, 0.0f))));
+=======
+					arg_Output.Pose[CurrentBoneIndex].SetRotation(FQuat::MakeFromEuler(FVector::DegreesToRadians(FVector(90.f, 0.f, 0.f))));
+>>>>>>> master
 				}
 				else if(ParentBoneIndex.GetInt() == 0)
 				{
