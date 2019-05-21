@@ -13,6 +13,7 @@
 #include "PlatformFilemanager.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
+#include <ThirdParty/glm/glm.hpp>
 #include <ThirdParty/glm/gtx/transform.hpp>
 #include <ThirdParty/glm/gtx/euler_angles.hpp>
 
@@ -350,14 +351,20 @@ void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 				const FCompactPoseBoneIndex ParentBoneIndex(Bones.GetParentBoneIndex(CurrentBoneIndex));
 
 				if (ParentBoneIndex.GetInt() == -1)
-				{	//Root Bone No conversion needed
-					arg_Output.Pose[CurrentBoneIndex].SetRotation(FinalBoneRotations[CurrentBoneIndex.GetInt()]);
-					arg_Output.Pose[CurrentBoneIndex].SetLocation(FinalBoneLocations[CurrentBoneIndex.GetInt()]);
+				{	
+					//Do nothing first UE4 root bone skipS
+				}
+				else if(ParentBoneIndex.GetInt() == 0)
+				{
+					//Root Bone No conversion needed
+					arg_Output.Pose[CurrentBoneIndex].SetRotation(FinalBoneRotations[CurrentBoneIndex.GetInt() -1]);
+					arg_Output.Pose[CurrentBoneIndex].SetLocation(FinalBoneLocations[CurrentBoneIndex.GetInt() -1]);
+					
 				}
 				else
 				{	//Conversion to LocalSpace (hopefully)
-					FTransform CurrentBoneTransform = FTransform(FinalBoneRotations[CurrentBoneIndex.GetInt()], FinalBoneLocations[CurrentBoneIndex.GetInt()], FVector::OneVector);
-					FTransform ParentBoneTransform = FTransform(FinalBoneRotations[ParentBoneIndex.GetInt()], FinalBoneLocations[ParentBoneIndex.GetInt()], FVector::OneVector);
+					FTransform CurrentBoneTransform = FTransform(FinalBoneRotations[CurrentBoneIndex.GetInt() -1], FinalBoneLocations[CurrentBoneIndex.GetInt() -1], FVector::OneVector);
+					FTransform ParentBoneTransform = FTransform(FinalBoneRotations[ParentBoneIndex.GetInt() -1], FinalBoneLocations[ParentBoneIndex.GetInt() -1], FVector::OneVector);
 
 					FTransform LocalBoneTransform = CurrentBoneTransform.GetRelativeTransform(ParentBoneTransform);
 
@@ -495,6 +502,10 @@ void FAnimNode_PFNN::DrawDebugSkeleton(const FPoseContext& arg_Context)
 		arg_Context.AnimInstanceProxy->AnimDrawDebugCoordinateSystem(CurrentBoneLocation + CharacterTransform.GetLocation(), BoneRotator, 10.0f, false, -1.0f, 0.2);
 		arg_Context.AnimInstanceProxy->AnimDrawDebugSphere(CurrentBoneLocation + CharacterTransform.GetLocation(), 2.5f, 12, FColor::Green, false, -1.0f);
 		arg_Context.AnimInstanceProxy->AnimDrawDebugLine(CurrentBoneLocation + CharacterTransform.GetLocation(), ParentBoneLocation + CharacterTransform.GetLocation(), FColor::White, false, -1, 2.0f);
+
+		if(Trajectory->GetOwner()->GetWorld() != nullptr)
+			DrawDebugString(Trajectory->GetOwner()->GetWorld(), CurrentBoneLocation + CharacterTransform.GetLocation(), FString::FromInt(i), static_cast<AActor *>(0), FColor::Red, 0.01f, false, 2.0f);
+
 	}
 }
 
