@@ -82,6 +82,8 @@ public:
 	
 	void TickTrajectory();
 
+	void TickInput();
+	void CalculateTargetDirection();
 	void UpdatePastTrajectory();
 	void TickGaits();
 	void PredictFutureTrajectory();
