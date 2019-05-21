@@ -26,6 +26,6 @@ private:
 	class UTrajectoryComponent* TrajectoryComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = PFNNDebugging ,meta = (AllowPrivateAccess = "True"))
-	bool bIsDebuggingEnabled;
+	bool bIsSkeletonDebuggingEnabled;
 
 };

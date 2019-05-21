@@ -55,8 +55,7 @@ UTrajectoryComponent::UTrajectoryComponent(): ExtraStrafeSmooth(0), ExtraGaitSmo
 
 	OwnerPawn = nullptr;
 
-
-	bIsDebuggingEnabled = false;
+	bIsTrajectoryDebuggingEnabled = false;
 
 }
 
@@ -358,7 +357,7 @@ void UTrajectoryComponent::CalculateTargetDirection()
 	TrajectoryTargetDirectionNew = MixDirections(TrajectoryTargetVelocityDirection, TrajectoryTargetDirectionNew, StrafeAmount);
 	TargetDirection = MixDirections(TargetDirection, TrajectoryTargetDirectionNew, ExtraDirectionSmooth);
 	
-	if (bIsDebuggingEnabled)
+	if (bIsTrajectoryDebuggingEnabled)
 	{
 		FVector FlippedTargetDirectionNew = UPFNNHelperFunctions::XYZTranslationToXZY(TrajectoryTargetDirectionNew);
 		FVector FlippedCurrentFrameInput = UPFNNHelperFunctions::XYZTranslationToXZY(glm::vec3(CurrentFrameInput.x, 0.0f, CurrentFrameInput.y));
@@ -372,7 +371,7 @@ void UTrajectoryComponent::CalculateTargetDirection()
 
 void UTrajectoryComponent::DrawDebugTrajectory()
 {
-	if (bIsDebuggingEnabled)
+	if (bIsTrajectoryDebuggingEnabled)
 	{
 		const auto StartingPoint = Positions[0] * 100.0f;			//Get the leading point of the trajectory
 		const auto MidPoint = Positions[LENGTH / 2] * 100.0f;		//Get the mid point/player point of the trajectory

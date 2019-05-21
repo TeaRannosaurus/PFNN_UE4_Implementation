@@ -114,6 +114,6 @@ private:
 	glm::vec2 CurrentFrameInput;
 
 	UPROPERTY(EditAnywhere, Category = PFNNDebugging, meta = (AllowPrivateAccess = "True"))
-	bool bIsDebuggingEnabled;
+	bool bIsTrajectoryDebuggingEnabled;
 
 };
