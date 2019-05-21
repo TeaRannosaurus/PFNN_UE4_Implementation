@@ -352,13 +352,14 @@ void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 
 				if (ParentBoneIndex.GetInt() == -1)
 				{	
-					//Do nothing first UE4 root bone skipS
+					//Do nothing first UE4 root bone skips
+					arg_Output.Pose[CurrentBoneIndex].SetRotation(FQuat::MakeFromEuler(FVector::DegreesToRadians(FVector(90, 0, 0))));
 				}
 				else if(ParentBoneIndex.GetInt() == 0)
 				{
 					//Root Bone No conversion needed
-					arg_Output.Pose[CurrentBoneIndex].SetRotation(FinalBoneRotations[CurrentBoneIndex.GetInt() -1]);
-					arg_Output.Pose[CurrentBoneIndex].SetLocation(FinalBoneLocations[CurrentBoneIndex.GetInt() -1]);
+					arg_Output.Pose[CurrentBoneIndex].SetRotation(FinalBoneRotations[CurrentBoneIndex.GetInt() - 1]);
+					arg_Output.Pose[CurrentBoneIndex].SetLocation(FinalBoneLocations[CurrentBoneIndex.GetInt() - 1]);
 					
 				}
 				else
