@@ -11,6 +11,9 @@
 
 #include "PFNNDataContainer.generated.h"
 
+DECLARE_DELEGATE_FourParams(WeigthLoadingMatrixDelegate, Eigen::ArrayXXf&, const int, const int, FString)
+DECLARE_DELEGATE_ThreeParams(WeigthLoadingVectorDelegate, Eigen::ArrayXXf&, const int, FString)
+
 class UPhaseFunctionNeuralNetwork;
 
 /**
@@ -111,5 +114,28 @@ private:
 
 	UPROPERTY()
 	UPFNNDataContainer* PFNNDataContainer;
+
+};
+
+class PFNNWeigthLoader : public FNonAbandonableTask
+{
+public:
+
+	PFNNWeigthLoader(WeigthLoadingMatrixDelegate arg_FunctionDelegate);
+	PFNNWeigthLoader(WeigthLoadingVectorDelegate arg_FunctionDelegate);
+
+	~PFNNWeigthLoader();
+
+	FORCEINLINE TStatId GetStatId() const
+	{
+		RETURN_QUICK_DECLARE_CYCLE_STAT(PFNNWeigthLoader, STATGROUP_ThreadPoolAsyncTasks)
+	}
+
+	void DoWork();
+
+private:
+
+	WeigthLoadingMatrixDelegate MatrixDelegate;
+	WeigthLoadingVectorDelegate VectorDelegate;
 
 };

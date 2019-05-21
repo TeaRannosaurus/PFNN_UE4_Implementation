@@ -129,7 +129,6 @@ void UPFNNDataContainer::GetNetworkData(UPhaseFunctionNeuralNetwork& arg_PFNN)
 void UPFNNDataContainer::LoadWeights(Eigen::ArrayXXf& arg_A, const int arg_Rows, const int arg_Cols,
 	const FString arg_FileName, ...)
 {
-	UE_LOG(PFNN_Logging, Log, TEXT("Loading Weights from file: %s"), *arg_FileName);
 	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 
 	FString RelativePath = FPaths::ProjectDir();
@@ -139,7 +138,7 @@ void UPFNNDataContainer::LoadWeights(Eigen::ArrayXXf& arg_A, const int arg_Rows,
 
 	if (FileHandle == nullptr)
 	{
-		//UE_LOG(NeuralNetworkLoading, Fatal, TEXT("Fatal error, Failed to load Phase Function Neural Network weights. File name "));
+		UE_LOG(PFNN_Logging, Error, TEXT("Fatal error, Failed to load Phase Function Neural Network weights. File name "));
 		return;
 	}
 
@@ -158,12 +157,10 @@ void UPFNNDataContainer::LoadWeights(Eigen::ArrayXXf& arg_A, const int arg_Rows,
 
 	delete FileHandle;
 
-	UE_LOG(PFNN_Logging, Log, TEXT("Finished Loading Weights from file: %s"), *arg_FileName);
 }
 
 void UPFNNDataContainer::LoadWeights(Eigen::ArrayXf& arg_V, const int arg_Items, const FString arg_FileName, ...)
 {
-	UE_LOG(PFNN_Logging, Log, TEXT("Loading Weights from file: %s"), *arg_FileName);
 
 	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 
@@ -190,8 +187,6 @@ void UPFNNDataContainer::LoadWeights(Eigen::ArrayXf& arg_V, const int arg_Items,
 	}
 
 	delete FileHandle;
-
-	UE_LOG(PFNN_Logging, Log, TEXT("Finished Loading Weights from file: %s"), *arg_FileName);
 }
 
 bool UPFNNDataContainer::IsDataLoaded() const
@@ -216,7 +211,6 @@ FCriticalSection* UPFNNDataContainer::GetDataLocker()
 
 FPFNNDataLoader::FPFNNDataLoader(UPFNNDataContainer* arg_PFNNDataContainer) : PFNNDataContainer(arg_PFNNDataContainer)
 {
-
 }
 
 FPFNNDataLoader::~FPFNNDataLoader()
@@ -226,4 +220,33 @@ FPFNNDataLoader::~FPFNNDataLoader()
 void FPFNNDataLoader::DoWork()
 {
 	PFNNDataContainer->LoadNetworkData(EPFNNMode::PM_Cubic);
+}
+
+PFNNWeigthLoader::PFNNWeigthLoader(WeigthLoadingMatrixDelegate arg_FunctionDelegate)
+{
+	MatrixDelegate = arg_FunctionDelegate;
+}
+
+PFNNWeigthLoader::PFNNWeigthLoader(WeigthLoadingVectorDelegate arg_FunctionDelegate)
+{
+	VectorDelegate = arg_FunctionDelegate;
+}
+
+PFNNWeigthLoader::~PFNNWeigthLoader()
+{
+}
+
+void PFNNWeigthLoader::DoWork()
+{
+	if (MatrixDelegate.IsBound())
+	{
+
+		return;
+	}
+	if (VectorDelegate.IsBound())
+	{
+
+		return;
+	}
+	UE_LOG(PFNN_Logging, Warning, TEXT("Attempting to Launch Weight loading thread without binding function delegates!"));
 }
