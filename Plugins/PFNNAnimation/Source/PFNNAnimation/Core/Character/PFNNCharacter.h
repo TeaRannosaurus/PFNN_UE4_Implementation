@@ -18,9 +18,14 @@ public:
 
 	class UTrajectoryComponent* GetTrajectoryComponent();
 
+	bool HasDebuggingEnabled();
+
 private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "True"))
 	class UTrajectoryComponent* TrajectoryComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = PFNNDebugging ,meta = (AllowPrivateAccess = "True"))
+	bool bIsDebuggingEnabled;
 
 };

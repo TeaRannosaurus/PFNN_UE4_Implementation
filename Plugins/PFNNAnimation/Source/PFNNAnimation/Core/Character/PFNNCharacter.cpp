@@ -12,9 +12,16 @@ APFNNCharacter::APFNNCharacter()
 
 	TrajectoryComponent = CreateDefaultSubobject<UTrajectoryComponent>(TEXT("TrajectoryComponent"));
 
+	bIsDebuggingEnabled = false;
+
 }
 
 UTrajectoryComponent* APFNNCharacter::GetTrajectoryComponent()
 {
 	return TrajectoryComponent;
+}
+
+bool APFNNCharacter::HasDebuggingEnabled()
+{
+	return bIsDebuggingEnabled;
 }

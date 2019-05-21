@@ -4,6 +4,7 @@
 
 #include "Animation/AnimInstances/PFNNAnimInstance.h"
 #include "Animation/AnimComponents/TrajectoryComponent.h"
+#include "Core/Character/PFNNCharacter.h"
 #include "Utilities/PFNNHelperFunctions.h"
 
 #include "AnimInstanceProxy.h"
@@ -353,7 +354,7 @@ void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 				if (ParentBoneIndex.GetInt() == -1)
 				{	
 					//Do nothing first UE4 root bone skips
-					arg_Output.Pose[CurrentBoneIndex].SetRotation(FQuat::MakeFromEuler(FVector::DegreesToRadians(FVector(90, 0, 0))));
+					arg_Output.Pose[CurrentBoneIndex].SetRotation(FQuat::MakeFromEuler(FVector::DegreesToRadians(FVector(90.0f, 0.0f, 0.0f))));
 				}
 				else if(ParentBoneIndex.GetInt() == 0)
 				{
@@ -374,9 +375,10 @@ void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 				}
 			}
 			arg_Output.Pose.NormalizeRotations();
-
+#ifdef WITH_EDITOR
 			DrawDebugSkeleton(arg_Output);
 			DrawDebugBoneVelocity(arg_Output);
+#endif
 		}
 		else
 		{
@@ -466,47 +468,53 @@ void FAnimNode_PFNN::LogNetworkData(int arg_FrameCounter)
 
 void FAnimNode_PFNN::DrawDebugSkeleton(const FPoseContext& arg_Context) 
 {
-	const FTransform& CharacterTransform = arg_Context.AnimInstanceProxy->GetActorTransform();
-	FBoneContainer Bones = arg_Context.Pose.GetBoneContainer();
-
-	for (int32 i = 0; i < JOINT_NUM; i++)
+	APFNNCharacter* Character = Cast<APFNNCharacter>(Trajectory->GetOwner());
+	if (Character)
 	{
-		const FCompactPoseBoneIndex CurrentBoneIndex(i);
-		FCompactPoseBoneIndex ParentBoneIndex(Bones.GetParentBoneIndex(CurrentBoneIndex));
-
-		FVector CurrentBoneLocation = arg_Context.Pose[CurrentBoneIndex].GetLocation();
-		FVector ParentBoneLocation = CurrentBoneLocation;
-		if (ParentBoneIndex.GetInt() != -1) 
+		if (Character->HasDebuggingEnabled())
 		{
-			ParentBoneLocation = arg_Context.Pose[ParentBoneIndex].GetLocation();
-		}
+			const FTransform& CharacterTransform = arg_Context.AnimInstanceProxy->GetActorTransform();
+			FBoneContainer Bones = arg_Context.Pose.GetBoneContainer();
 
-		while (ParentBoneIndex.GetInt() != -1) 
-		{
-			CurrentBoneLocation += arg_Context.Pose[ParentBoneIndex].GetLocation();
-			ParentBoneIndex = Bones.GetParentBoneIndex(ParentBoneIndex);
-		}
-
-		ParentBoneIndex = Bones.GetParentBoneIndex(CurrentBoneIndex);
-		if (ParentBoneIndex.GetInt() != -1) 
-		{
-			ParentBoneIndex = Bones.GetParentBoneIndex(ParentBoneIndex);
-
-			while (ParentBoneIndex.GetInt() != -1)
+			for (int32 i = 0; i < JOINT_NUM; i++)
 			{
-				ParentBoneLocation += arg_Context.Pose[ParentBoneIndex].GetLocation();
-				ParentBoneIndex = Bones.GetParentBoneIndex(ParentBoneIndex);
+				const FCompactPoseBoneIndex CurrentBoneIndex(i);
+				FCompactPoseBoneIndex ParentBoneIndex(Bones.GetParentBoneIndex(CurrentBoneIndex));
+
+				FVector CurrentBoneLocation = arg_Context.Pose[CurrentBoneIndex].GetLocation();
+				FVector ParentBoneLocation = CurrentBoneLocation;
+				if (ParentBoneIndex.GetInt() != -1)
+				{
+					ParentBoneLocation = arg_Context.Pose[ParentBoneIndex].GetLocation();
+				}
+
+				while (ParentBoneIndex.GetInt() != -1)
+				{
+					CurrentBoneLocation += arg_Context.Pose[ParentBoneIndex].GetLocation();
+					ParentBoneIndex = Bones.GetParentBoneIndex(ParentBoneIndex);
+				}
+
+				ParentBoneIndex = Bones.GetParentBoneIndex(CurrentBoneIndex);
+				if (ParentBoneIndex.GetInt() != -1)
+				{
+					ParentBoneIndex = Bones.GetParentBoneIndex(ParentBoneIndex);
+
+					while (ParentBoneIndex.GetInt() != -1)
+					{
+						ParentBoneLocation += arg_Context.Pose[ParentBoneIndex].GetLocation();
+						ParentBoneIndex = Bones.GetParentBoneIndex(ParentBoneIndex);
+					}
+				}
+
+				FRotator BoneRotator = FRotator(FinalBoneRotations[i]);
+				arg_Context.AnimInstanceProxy->AnimDrawDebugCoordinateSystem(CurrentBoneLocation + CharacterTransform.GetLocation(), BoneRotator, 10.0f, false, -1.0f, 0.2);
+				arg_Context.AnimInstanceProxy->AnimDrawDebugSphere(CurrentBoneLocation + CharacterTransform.GetLocation(), 2.5f, 12, FColor::Green, false, -1.0f);
+				arg_Context.AnimInstanceProxy->AnimDrawDebugLine(CurrentBoneLocation + CharacterTransform.GetLocation(), ParentBoneLocation + CharacterTransform.GetLocation(), FColor::White, false, -1, 2.0f);
+
+				if (Trajectory->GetOwner()->GetWorld() != nullptr)
+					DrawDebugString(Trajectory->GetOwner()->GetWorld(), CurrentBoneLocation + CharacterTransform.GetLocation(), FString::FromInt(i), static_cast<AActor*>(0), FColor::Red, 0.01f, false, 2.0f);
 			}
 		}
-
-		FRotator BoneRotator = FRotator(FinalBoneRotations[i]);
-		arg_Context.AnimInstanceProxy->AnimDrawDebugCoordinateSystem(CurrentBoneLocation + CharacterTransform.GetLocation(), BoneRotator, 10.0f, false, -1.0f, 0.2);
-		arg_Context.AnimInstanceProxy->AnimDrawDebugSphere(CurrentBoneLocation + CharacterTransform.GetLocation(), 2.5f, 12, FColor::Green, false, -1.0f);
-		arg_Context.AnimInstanceProxy->AnimDrawDebugLine(CurrentBoneLocation + CharacterTransform.GetLocation(), ParentBoneLocation + CharacterTransform.GetLocation(), FColor::White, false, -1, 2.0f);
-
-		if(Trajectory->GetOwner()->GetWorld() != nullptr)
-			DrawDebugString(Trajectory->GetOwner()->GetWorld(), CurrentBoneLocation + CharacterTransform.GetLocation(), FString::FromInt(i), static_cast<AActor *>(0), FColor::Red, 0.01f, false, 2.0f);
-
 	}
 }
 
@@ -515,19 +523,26 @@ void FAnimNode_PFNN::DrawDebugBoneVelocity(const FPoseContext& arg_Context)
 	if(!GEngine)
 		return;
 	
-	for(int32 i = 0; i < JOINT_NUM; i++)
+	APFNNCharacter* Character = Cast<APFNNCharacter>(Trajectory->GetOwner());
+	if (Character)
 	{
-		auto JointPos = FVector(JointPosition[i].x, JointPosition[i].z, JointPosition[i].y);
+		if (Character->HasDebuggingEnabled())
+		{
+			for (int32 i = 0; i < JOINT_NUM; i++)
+			{
+				auto JointPos = FVector(JointPosition[i].x, JointPosition[i].z, JointPosition[i].y);
 
-		arg_Context.AnimInstanceProxy->AnimDrawDebugLine(
-			JointPos,
-			JointPos - 10 * FVector(JointVelocitys[i].x, JointVelocitys[i].z, JointVelocitys[i].y),
-			FColor::Yellow, 
-			false,
-			-1, 
-			0.5f
-		);
-		
+				arg_Context.AnimInstanceProxy->AnimDrawDebugLine(
+					JointPos,
+					JointPos - 10 * FVector(JointVelocitys[i].x, JointVelocitys[i].z, JointVelocitys[i].y),
+					FColor::Yellow,
+					false,
+					-1,
+					0.5f
+				);
+
+			}
+		}
 	}
 }
 

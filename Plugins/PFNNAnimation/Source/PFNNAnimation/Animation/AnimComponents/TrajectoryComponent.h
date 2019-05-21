@@ -95,15 +95,6 @@ protected:
 
 private:
 
-
-
-	APawn* OwnerPawn;
-
-	glm::vec2 CurrentFrameInput;
-
-
-
-
 	/*
 	* @Description Returnes a liniar bled between the X and Y vector direction by using the floating point scalar
 	* @Param[in] X vector
@@ -113,15 +104,16 @@ private:
 	*/
 	static glm::vec3 MixDirections(const glm::vec3 arg_XDirection, const glm::vec3 arg_YDirection, const float arg_Scalar);
 
-
-
-#if WITH_EDITORONLY_DATA
-	UPROPERTY(EditAnywhere, Category = Debug)
-	bool bShowDebugInformation;
-#endif
-
-#if !UE_BUILD_SHIPPING //Debug functions are excluded from the shipping build
 	void DrawDebugTrajectory();
-	//void DrawDebugUI();
-#endif
+
+private:
+
+	UPROPERTY()
+	APawn* OwnerPawn;
+
+	glm::vec2 CurrentFrameInput;
+
+	UPROPERTY(EditAnywhere, Category = PFNNDebugging, meta = (AllowPrivateAccess = "True"))
+	bool bIsDebuggingEnabled;
+
 };
