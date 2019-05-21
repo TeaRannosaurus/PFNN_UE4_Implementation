@@ -10,6 +10,7 @@
 #include "DrawDebugHelpers.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
+#include <ThirdParty/glm/glm.hpp>
 #include <ThirdParty/glm/gtx/transform.hpp>
 #include <ThirdParty/glm/gtx/euler_angles.hpp>
 
@@ -499,6 +500,10 @@ void FAnimNode_PFNN::DrawDebugSkeleton(const FPoseContext& arg_Context)
 		arg_Context.AnimInstanceProxy->AnimDrawDebugCoordinateSystem(CurrentBoneLocation + CharacterTransform.GetLocation(), BoneRotator, 10.0f, false, -1.0f, 0.2);
 		arg_Context.AnimInstanceProxy->AnimDrawDebugSphere(CurrentBoneLocation + CharacterTransform.GetLocation(), 2.5f, 12, FColor::Green, false, -1.0f);
 		arg_Context.AnimInstanceProxy->AnimDrawDebugLine(CurrentBoneLocation + CharacterTransform.GetLocation(), ParentBoneLocation + CharacterTransform.GetLocation(), FColor::White, false, -1, 2.0f);
+
+		if(Trajectory->GetOwner()->GetWorld() != nullptr)
+			DrawDebugString(Trajectory->GetOwner()->GetWorld(), CurrentBoneLocation + CharacterTransform.GetLocation(), FString::FromInt(i), static_cast<AActor *>(0), FColor::Red, 0.01f, false, 2.0f);
+
 	}
 }
 
