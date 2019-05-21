@@ -355,14 +355,20 @@ void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 				const FCompactPoseBoneIndex ParentBoneIndex(Bones.GetParentBoneIndex(CurrentBoneIndex));
 
 				if (ParentBoneIndex.GetInt() == -1)
-				{	//Root Bone No conversion needed
-					arg_Output.Pose[CurrentBoneIndex].SetRotation(FinalBoneRotations[CurrentBoneIndex.GetInt()]);
-					arg_Output.Pose[CurrentBoneIndex].SetLocation(FinalBoneLocations[CurrentBoneIndex.GetInt()]);
+				{	
+					//Do nothing first UE4 root bone skipS
+				}
+				else if(ParentBoneIndex.GetInt() == 0)
+				{
+					//Root Bone No conversion needed
+					arg_Output.Pose[CurrentBoneIndex].SetRotation(FinalBoneRotations[CurrentBoneIndex.GetInt() -1]);
+					arg_Output.Pose[CurrentBoneIndex].SetLocation(FinalBoneLocations[CurrentBoneIndex.GetInt() -1]);
+					
 				}
 				else
 				{	//Conversion to LocalSpace (hopefully)
-					FTransform CurrentBoneTransform = FTransform(FinalBoneRotations[CurrentBoneIndex.GetInt()], FinalBoneLocations[CurrentBoneIndex.GetInt()], FVector::OneVector);
-					FTransform ParentBoneTransform = FTransform(FinalBoneRotations[ParentBoneIndex.GetInt()], FinalBoneLocations[ParentBoneIndex.GetInt()], FVector::OneVector);
+					FTransform CurrentBoneTransform = FTransform(FinalBoneRotations[CurrentBoneIndex.GetInt() -1], FinalBoneLocations[CurrentBoneIndex.GetInt() -1], FVector::OneVector);
+					FTransform ParentBoneTransform = FTransform(FinalBoneRotations[ParentBoneIndex.GetInt() -1], FinalBoneLocations[ParentBoneIndex.GetInt() -1], FVector::OneVector);
 
 					FTransform LocalBoneTransform = CurrentBoneTransform.GetRelativeTransform(ParentBoneTransform);
 					//LocalBoneTransform.SetLocation(LocalBoneTransform.GetRotation().Inverse() * LocalBoneTransform.GetLocation());
