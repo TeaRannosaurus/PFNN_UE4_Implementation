@@ -25,5 +25,4 @@ public:
 	static glm::vec3 XZYTranslationToXYZ(const FVector& arg_TranslationVector);
 	static glm::vec3 XZYTranslationToXYZ(const glm::vec3& arg_TranslationVector);
 
-
 };

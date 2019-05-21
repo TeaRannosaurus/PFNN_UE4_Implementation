@@ -22,3 +22,4 @@ glm::vec3 UPFNNHelperFunctions::XZYTranslationToXYZ(const glm::vec3& arg_Transla
 {
 	return glm::vec3(-arg_TranslationVector.x, arg_TranslationVector.y, arg_TranslationVector.z);
 }
+

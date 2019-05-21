@@ -4,17 +4,19 @@
 
 #include "Animation/AnimInstances/PFNNAnimInstance.h"
 #include "Animation/AnimComponents/TrajectoryComponent.h"
+#include "Utilities/PFNNHelperFunctions.h"
+
 #include "AnimInstanceProxy.h"
 #include "Animation/PFNN/PhaseFunctionNeuralNetwork.h"
-#include "PlatformFilemanager.h"
 #include "DrawDebugHelpers.h"
+#include "Engine/Engine.h"
+#include "PlatformFilemanager.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <ThirdParty/glm/gtx/transform.hpp>
 #include <ThirdParty/glm/gtx/euler_angles.hpp>
 
 #include <fstream>
-#include "Engine/Engine.h"
 
 UPhaseFunctionNeuralNetwork* FAnimNode_PFNN::PFNN = nullptr;
 
@@ -83,11 +85,10 @@ void FAnimNode_PFNN::LoadPFNN()
 
 void FAnimNode_PFNN::ApplyPFNN()
 {
-
 	Trajectory->TickTrajectory();
 
-	auto RootPosition = Trajectory->GetRootPosition();
-	auto RootRotation = Trajectory->GetRootRotation();
+	glm::vec3 RootPosition = Trajectory->GetRootPosition();
+	glm::mat3 RootRotation = Trajectory->GetRootRotation();
 
 	//Input trajectiory positions and directions
 	for (int i = 0; i < UTrajectoryComponent::LENGTH; i += 10)
@@ -148,8 +149,8 @@ void FAnimNode_PFNN::ApplyPFNN()
 		FHitResult HitResultLeft(ForceInit);
 		FHitResult HitResultRight(ForceInit);
 
-		const FVector UPositionRight = FVector(PositionRight.x, PositionRight.z, PositionRight.y);
-		const FVector UPositionLeft = FVector(PositionLeft.x, PositionLeft.z, PositionLeft.y);
+		const FVector UPositionRight = UPFNNHelperFunctions::XYZTranslationToXZY(PositionRight);
+		const FVector UPositionLeft = UPFNNHelperFunctions::XYZTranslationToXZY(PositionLeft);
 
 		Trajectory->GetOwner()->GetWorld()->LineTraceSingleByChannel(HitResultRight, UPositionLeft, -FVector::UpVector * DistanceLenght, ECC_Pawn, TraceParams);
 		Trajectory->GetOwner()->GetWorld()->LineTraceSingleByChannel(HitResultLeft, UPositionRight, -FVector::UpVector * DistanceLenght, ECC_Pawn, TraceParams);
@@ -249,15 +250,10 @@ void FAnimNode_PFNN::ApplyPFNN()
 
 	for (int32 i = 0; i < JOINT_NUM; i++)
 	{
-		FinalBoneLocations[i] = FVector(-JointPosition[i].x, JointPosition[i].z, JointPosition[i].y);
+		FinalBoneLocations[i] = UPFNNHelperFunctions::XYZTranslationToXZY(JointPosition[i]);
 
-		glm::mat4 XYZRotMatrix = glm::eulerAngleXYZ(JointRotations[i].x, -JointRotations[i].y, JointRotations[i].z);
-		
-		glm::vec3 eulerXZY;
-		glm::extractEulerAngleXZY(XYZRotMatrix, eulerXZY.x, eulerXZY.y, eulerXZY.z);
-
-		FVector UnrealJointRotation = FVector(eulerXZY.x, -eulerXZY.z, eulerXZY.y);
-		FinalBoneRotations[i] = FQuat(FQuat::MakeFromEuler(FVector::RadiansToDegrees(UnrealJointRotation))); //Flip YZ...  @TODO DEBUG AND PROPERLY FLIP
+		FVector UnrealJointRotation = UPFNNHelperFunctions::XYZTranslationToXZY(JointRotations[i]);
+		FinalBoneRotations[i] = FQuat(FQuat::MakeFromEuler(FVector::RadiansToDegrees(UnrealJointRotation)));
 
 	}
 	
@@ -323,7 +319,7 @@ void FAnimNode_PFNN::Update_AnyThread(const FAnimationUpdateContext& arg_Context
 {
 	FAnimNode_Base::Update_AnyThread(arg_Context);
 
-	if (!bIsPFNNLoaded) 
+	if (!bIsPFNNLoaded)
 	{
 		LoadData();
 	}
@@ -364,9 +360,9 @@ void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 					FTransform ParentBoneTransform = FTransform(FinalBoneRotations[ParentBoneIndex.GetInt()], FinalBoneLocations[ParentBoneIndex.GetInt()], FVector::OneVector);
 
 					FTransform LocalBoneTransform = CurrentBoneTransform.GetRelativeTransform(ParentBoneTransform);
-					//LocalBoneTransform.SetLocation(LocalBoneTransform.GetRotation().Inverse() * LocalBoneTransform.GetLocation());
 
 					arg_Output.Pose[CurrentBoneIndex].SetComponents(LocalBoneTransform.GetRotation(), LocalBoneTransform.GetLocation(), LocalBoneTransform.GetScale3D());
+					LocalBoneTransform.SetLocation(LocalBoneTransform.GetRotation().Inverse() * LocalBoneTransform.GetLocation());
 				}
 			}
 			arg_Output.Pose.NormalizeRotations();

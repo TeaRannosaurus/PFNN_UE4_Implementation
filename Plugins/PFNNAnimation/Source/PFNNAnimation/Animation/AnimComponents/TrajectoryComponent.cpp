@@ -382,17 +382,17 @@ void UTrajectoryComponent::DrawDebugTrajectory()
 
 	for (size_t i = 0; i < LENGTH; i++)
 	{
-			FVector DebugLocation = (FVector(-Positions[i].x, Positions[i].z, Positions[i].y) * 100.0f) + GetOwner()->GetActorLocation();
-			DrawDebugPoint(GetWorld(), DebugLocation, 4.0f,FColor::Red);
+		FVector DebugLocation = (UPFNNHelperFunctions::XYZTranslationToXZY(Positions[i]) * 100.0f) + GetOwner()->GetActorLocation();
+		DrawDebugPoint(GetWorld(), DebugLocation, 4.0f,FColor::Red);
 
-			FVector Ue4Direction = FVector(-Directions[i].x, Directions[i].z, Directions[i].y) * 50.0f;
-			FVector DirectionLocation = DebugLocation + Ue4Direction;
-			DrawDebugDirectionalArrow(GetWorld(), DebugLocation, DirectionLocation, 25.0f, FColor::Black, false, -1.0f, 0, 3.f);
+		FVector Ue4Direction = UPFNNHelperFunctions::XYZTranslationToXZY(Directions[i]) * 50.0f;
+		FVector DirectionLocation = DebugLocation + Ue4Direction;
+		DrawDebugDirectionalArrow(GetWorld(), DebugLocation, DirectionLocation, 25.0f, FColor::Black, false, -1.0f, 0, 3.f);
 	}
 
-	FVector DebugStartingPoint = FVector(-StartingPoint.x, StartingPoint.z, StartingPoint.y) + GetOwner()->GetActorLocation();
-	FVector DebugMidPoint = FVector(-MidPoint.x, MidPoint.z, MidPoint.y) + GetOwner()->GetActorLocation();
-	FVector DebugEndPoint = FVector(-EndingPoint.x, EndingPoint.z, EndingPoint.y) + GetOwner()->GetActorLocation();
+	FVector DebugStartingPoint = UPFNNHelperFunctions::XYZTranslationToXZY(StartingPoint) + GetOwner()->GetActorLocation();
+	FVector DebugMidPoint = UPFNNHelperFunctions::XYZTranslationToXZY(MidPoint) + GetOwner()->GetActorLocation();
+	FVector DebugEndPoint = UPFNNHelperFunctions::XYZTranslationToXZY(EndingPoint) + GetOwner()->GetActorLocation();
 
 	DrawDebugPoint(GetWorld(), DebugStartingPoint, 10.0f, FColor::Red);
 	DrawDebugPoint(GetWorld(), DebugMidPoint, 10.0f, FColor::Red);
