@@ -2,19 +2,18 @@
 
 #include "TrajectoryComponent.h"
 
-#include "PFNNAnimation/Core/Character/PFNNCharacter.h"
-
-#define GLM_ENABLE_EXPERIMENTAL
-#include <ThirdParty/glm/gtx/transform.hpp>
+#include "Core/Character/PFNNCharacter.h"
+#include "Utilities/PFNNHelperFunctions.h"
 
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/World.h"
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <ThirdParty/glm/gtx/transform.hpp>
 #include <ThirdParty/glm/ext/quaternion_trigonometric.hpp>
 #include <ThirdParty/glm/ext/quaternion_common.hpp>
 #include <ThirdParty/glm/detail/type_quat.hpp>
-
 
 #include <fstream>
 
@@ -81,11 +80,9 @@ void UTrajectoryComponent::BeginPlay()
 
 glm::vec3 UTrajectoryComponent::GetRootPosition() const
 {
-	return glm::vec3(
-		-GetOwner()->GetActorLocation().X * 0.01f,
-		Heights[LENGTH / 2],
-		GetOwner()->GetActorLocation().Y * 0.01f
-	);
+	return UPFNNHelperFunctions::XZYTranslationToXYZ(FVector(GetOwner()->GetActorLocation().X, 
+															 GetOwner()->GetActorLocation().Y, 
+															 Heights[LENGTH/2]));
 }
 
 glm::vec3 UTrajectoryComponent::GetPreviousRootPosition() const
@@ -324,12 +321,22 @@ void UTrajectoryComponent::LogTrajectoryData(int arg_FrameCount)
 
 void UTrajectoryComponent::TickTrajectory()
 {
+	TickInput();
+	CalculateTargetDirection();
+	TickGaits();
+	PredictFutureTrajectory();
+	TickRotations();
+	TickHeights();
+}
 
-	auto PFNNCharacter = Cast<APFNNCharacter>(GetOwner());
+void UTrajectoryComponent::TickInput()
+{
+	APFNNCharacter* PFNNCharacter = Cast<APFNNCharacter>(GetOwner());
 	if (PFNNCharacter)
 	{
-		auto MovementComponent = PFNNCharacter->GetMovementComponent();
-		CurrentFrameInput = glm::vec2(-MovementComponent->Velocity.X, -MovementComponent->Velocity.Y);
+		UPawnMovementComponent* MovementComponent = PFNNCharacter->GetMovementComponent();
+		glm::vec3 FlippedVelocity = UPFNNHelperFunctions::XZYTranslationToXYZ(MovementComponent->Velocity);
+		CurrentFrameInput = glm::vec2(FlippedVelocity.x, FlippedVelocity.z);
 		CurrentFrameInput = glm::normalize(CurrentFrameInput);
 	}
 
@@ -337,13 +344,16 @@ void UTrajectoryComponent::TickTrajectory()
 	{
 		CurrentFrameInput = glm::vec2(0.0f);
 	}
+}
 
-	glm::vec3 TrajectoryTargetDirectionNew = glm::normalize(glm::vec3(-GetOwner()->GetActorForwardVector().X, 0.0f, GetOwner()->GetActorForwardVector().Y));
+void UTrajectoryComponent::CalculateTargetDirection()
+{
+	glm::vec3 FlippedForward = UPFNNHelperFunctions::XZYTranslationToXYZ(glm::vec3(GetOwner()->GetActorForwardVector().X, GetOwner()->GetActorForwardVector().Y, 0.0f));
+	glm::vec3 TrajectoryTargetDirectionNew = glm::normalize(FlippedForward);
 	const glm::mat3 TrajectoryTargetRotation = glm::mat3(glm::rotate(atan2f(
 		TrajectoryTargetDirectionNew.x,
 		TrajectoryTargetDirectionNew.z), glm::vec3(0.0f, 1.0f, 0.0f)));
 
-	//CurrentFrameInput.x = 1;
 	const float TargetVelocitySpeed = OwnerPawn->GetVelocity().SizeSquared() / (OwnerPawn->GetMovementComponent()->GetMaxSpeed() * OwnerPawn->GetMovementComponent()->GetMaxSpeed()) * 7.5f; //7.5 is current training walking speed
 
 	const glm::vec3 TrajectoryTargetVelocityNew = TargetVelocitySpeed * (TrajectoryTargetRotation * glm::vec3(CurrentFrameInput.x, 0, CurrentFrameInput.y));
@@ -353,16 +363,14 @@ void UTrajectoryComponent::TickTrajectory()
 	TrajectoryTargetDirectionNew = MixDirections(TrajectoryTargetVelocityDirection, TrajectoryTargetDirectionNew, StrafeAmount);
 	TargetDirection = MixDirections(TargetDirection, TrajectoryTargetDirectionNew, ExtraDirectionSmooth);
 
-	DrawDebugDirectionalArrow(GetWorld(), GetOwner ()->GetActorLocation(), GetOwner()->GetActorLocation() + FVector(-TrajectoryTargetDirectionNew.x, TrajectoryTargetDirectionNew.z, TrajectoryTargetDirectionNew.y) * 100.0f, 0.0f, FColor::Blue, false, -1, 0, 2);
-	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::White, FString::Printf(TEXT("x: %f y: %f Current frame input"), -CurrentFrameInput.x, CurrentFrameInput.y));
-	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Green, FString::Printf(TEXT("x: %f y: %f z: %f TrajectoryTargetDirectionNew"), -TrajectoryTargetDirectionNew.x, TrajectoryTargetDirectionNew.z, TrajectoryTargetDirectionNew.y));
-	DrawDebugDirectionalArrow(GetWorld(), GetOwner()->GetActorLocation(), GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 150, 10.0f, FColor::Red, false, -1, 0, 5);
-	DrawDebugDirectionalArrow(GetWorld(), GetOwner()->GetActorLocation(), GetOwner()->GetActorLocation() + FVector(-CurrentFrameInput.x, CurrentFrameInput.y, 0.0f) * 100, 10.0f, FColor::White, false, -1, 0, 2);
+	FVector FlippedTargetDirectionNew = UPFNNHelperFunctions::XYZTranslationToXZY(TrajectoryTargetDirectionNew);
+	FVector FlippedCurrentFrameInput = UPFNNHelperFunctions::XYZTranslationToXZY(glm::vec3(CurrentFrameInput.x, 0.0f, CurrentFrameInput.y));
 
-	TickGaits();
-	PredictFutureTrajectory();
-	TickRotations();
-	TickHeights();
+	DrawDebugDirectionalArrow(GetWorld(), GetOwner()->GetActorLocation(), GetOwner()->GetActorLocation() + FlippedTargetDirectionNew * 100.0f, 0.0f, FColor::Blue, false, -1, 0, 2);
+	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::White, FString::Printf(TEXT("%s Current frame input"), *FlippedCurrentFrameInput.ToString()));
+	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Green, FString::Printf(TEXT("%s TrajectoryTargetDirectionNew"), *FlippedTargetDirectionNew.ToString()));
+	DrawDebugDirectionalArrow(GetWorld(), GetOwner()->GetActorLocation(), GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 150, 10.0f, FColor::Red, false, -1, 0, 5);
+	DrawDebugDirectionalArrow(GetWorld(), GetOwner()->GetActorLocation(), GetOwner()->GetActorLocation() + FlippedCurrentFrameInput * 100, 10.0f, FColor::White, false, -1, 0, 2);
 }
 
 #if !UE_BUILD_SHIPPING //Debug functions are excluded from the shipping build
