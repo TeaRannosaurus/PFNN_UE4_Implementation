@@ -161,7 +161,8 @@ void UTrajectoryComponent::PredictFutureTrajectory()
 		const float ScalePosition = (1.0f - powf(1.0f - (static_cast<float>(i - LENGTH / 2) / (LENGTH / 2)), BiasPosition));
 		const float ScaleDirection = (1.0f - powf(1.0f - (static_cast<float>(i - LENGTH / 2) / (LENGTH / 2)), BiasDirection));
 
-		TrajectoryPositionsBlend[i] = TrajectoryPositionsBlend[i-1] + glm::mix(Positions[i] - Positions[i - 1], TargetVelocity, ScalePosition);
+		TrajectoryPositionsBlend[i] = TrajectoryPositionsBlend[i - 1] + glm::mix(Positions[i] - Positions[i], TargetVelocity, ScalePosition);
+		//TrajectoryPositionsBlend[i] = glm::mix(Positions[i] - Positions[i - 1], TargetVelocity, ScalePosition);
 
 		//TODO: Add wall colision for future trajectory - 1519
 
