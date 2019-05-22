@@ -20,6 +20,6 @@ glm::vec3 UPFNNHelperFunctions::XZYTranslationToXYZ(const FVector& arg_Translati
 
 glm::vec3 UPFNNHelperFunctions::XZYTranslationToXYZ(const glm::vec3& arg_TranslationVector)
 {
-	return glm::vec3(-arg_TranslationVector.x, arg_TranslationVector.y, arg_TranslationVector.z);
+	return glm::vec3(-arg_TranslationVector.x, arg_TranslationVector.z, arg_TranslationVector.y);
 }
 

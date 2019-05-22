@@ -75,8 +75,8 @@ void UTrajectoryComponent::BeginPlay()
 
 glm::vec3 UTrajectoryComponent::GetRootPosition() const
 {
-	return UPFNNHelperFunctions::XZYTranslationToXYZ(FVector(GetOwner()->GetActorLocation().X, 
-															 GetOwner()->GetActorLocation().Y, 
+	return UPFNNHelperFunctions::XZYTranslationToXYZ(FVector(GetOwner()->GetActorLocation().X * 0.01, 
+															 GetOwner()->GetActorLocation().Y * 0.01, 
 															 Heights[LENGTH/2]));
 }
 
@@ -165,7 +165,9 @@ void UTrajectoryComponent::PredictFutureTrajectory()
 
 		//TODO: Add wall colision for future trajectory - 1519
 
-		Directions[i] = MixDirections(Directions[i], TargetDirection, ScaleDirection);
+		//Directions[i] = MixDirections(Directions[i], TargetDirection, ScaleDirection);
+		Directions[i] = TargetDirection;
+
 
 		Heights[i] = Heights[LENGTH / 2];
 
@@ -350,12 +352,12 @@ void UTrajectoryComponent::CalculateTargetDirection()
 
 	const float TargetVelocitySpeed = OwnerPawn->GetVelocity().SizeSquared() / (OwnerPawn->GetMovementComponent()->GetMaxSpeed() * OwnerPawn->GetMovementComponent()->GetMaxSpeed()) * 7.5f; //7.5 is current training walking speed
 
-	const glm::vec3 TrajectoryTargetVelocityNew = TargetVelocitySpeed * (TrajectoryTargetRotation * glm::vec3(CurrentFrameInput.x, 0, CurrentFrameInput.y));
+	const glm::vec3 TrajectoryTargetVelocityNew = TargetVelocitySpeed * glm::vec3(CurrentFrameInput.x, 0, CurrentFrameInput.y);
 	TargetVelocity = glm::mix(TargetVelocity, TrajectoryTargetVelocityNew, ExtraVelocitySmooth);
 	StrafeAmount = glm::mix(StrafeAmount, StrafeTarget, ExtraStrafeSmooth);
 	const glm::vec3 TrajectoryTargetVelocityDirection = glm::length(TargetVelocity) < 1e-05 ? TargetDirection : glm::normalize(TargetVelocity);
-	TrajectoryTargetDirectionNew = MixDirections(TrajectoryTargetVelocityDirection, TrajectoryTargetDirectionNew, StrafeAmount);
-	TargetDirection = MixDirections(TargetDirection, TrajectoryTargetDirectionNew, ExtraDirectionSmooth);
+	//TrajectoryTargetDirectionNew = MixDirections(TrajectoryTargetVelocityDirection, TrajectoryTargetDirectionNew, StrafeAmount);
+	TargetDirection = TrajectoryTargetDirectionNew;//MixDirections(TargetDirection, TrajectoryTargetDirectionNew, ExtraDirectionSmooth);
 	
 	if (bIsTrajectoryDebuggingEnabled)
 	{
@@ -379,7 +381,7 @@ void UTrajectoryComponent::DrawDebugTrajectory()
 
 		for (size_t i = 0; i < LENGTH; i++)
 		{
-			FVector DebugLocation = (UPFNNHelperFunctions::XYZTranslationToXZY(Positions[i]) * 100.0f) + GetOwner()->GetActorLocation();
+			FVector DebugLocation = (UPFNNHelperFunctions::XYZTranslationToXZY(Positions[i]) * 100.0f);
 			DrawDebugPoint(GetWorld(), DebugLocation, 4.0f, FColor::Red);
 
 			FVector Ue4Direction = UPFNNHelperFunctions::XYZTranslationToXZY(Directions[i]) * 50.0f;
@@ -387,9 +389,9 @@ void UTrajectoryComponent::DrawDebugTrajectory()
 			DrawDebugDirectionalArrow(GetWorld(), DebugLocation, DirectionLocation, 25.0f, FColor::Black, false, -1.0f, 0, 3.f);
 		}
 
-		FVector DebugStartingPoint = UPFNNHelperFunctions::XYZTranslationToXZY(StartingPoint) + GetOwner()->GetActorLocation();
-		FVector DebugMidPoint = UPFNNHelperFunctions::XYZTranslationToXZY(MidPoint) + GetOwner()->GetActorLocation();
-		FVector DebugEndPoint = UPFNNHelperFunctions::XYZTranslationToXZY(EndingPoint) + GetOwner()->GetActorLocation();
+		FVector DebugStartingPoint = UPFNNHelperFunctions::XYZTranslationToXZY(StartingPoint);
+		FVector DebugMidPoint = UPFNNHelperFunctions::XYZTranslationToXZY(MidPoint);
+		FVector DebugEndPoint = UPFNNHelperFunctions::XYZTranslationToXZY(EndingPoint);
 
 		DrawDebugPoint(GetWorld(), DebugStartingPoint, 10.0f, FColor::Red);
 		DrawDebugPoint(GetWorld(), DebugMidPoint, 10.0f, FColor::Red);
