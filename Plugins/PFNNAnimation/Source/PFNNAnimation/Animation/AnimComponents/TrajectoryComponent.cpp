@@ -175,6 +175,7 @@ void UTrajectoryComponent::PredictFutureTrajectory()
 		GaitJog[i]	= GaitJog [LENGTH / 2];
 		GaitJump[i] = GaitJump[LENGTH / 2];
 		GaitBump[i] = GaitBump[LENGTH / 2];
+		
 	}
 
 	for (int i = LENGTH / 2 + 1; i < LENGTH; i++)
@@ -349,7 +350,7 @@ void UTrajectoryComponent::CalculateTargetDirection()
 		TrajectoryTargetDirectionNew.x,
 		TrajectoryTargetDirectionNew.z), glm::vec3(0.0f, 1.0f, 0.0f)));
 
-	const float TargetVelocitySpeed = OwnerPawn->GetVelocity().SizeSquared() / (OwnerPawn->GetMovementComponent()->GetMaxSpeed() * OwnerPawn->GetMovementComponent()->GetMaxSpeed()) * 7.5f; //7.5 is current training walking speed
+	const float TargetVelocitySpeed = OwnerPawn->GetVelocity().SizeSquared() / (OwnerPawn->GetMovementComponent()->GetMaxSpeed() * OwnerPawn->GetMovementComponent()->GetMaxSpeed()) / 7.5f; //7.5 is current training walking speed
 
 	const glm::vec3 TrajectoryTargetVelocityNew = TargetVelocitySpeed * glm::vec3(CurrentFrameInput.x, 0.0f, CurrentFrameInput.y);
 	TargetVelocity = glm::mix(TargetVelocity, TrajectoryTargetVelocityNew, ExtraVelocitySmooth);
