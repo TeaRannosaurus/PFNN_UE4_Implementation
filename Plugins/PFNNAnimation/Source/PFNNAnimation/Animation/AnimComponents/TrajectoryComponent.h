@@ -19,6 +19,57 @@ public:
 	UTrajectoryComponent();
 	~UTrajectoryComponent();
 
+	glm::vec3 GetRootPosition() const;
+	glm::vec3 GetPreviousRootPosition() const;
+	glm::mat3 GetRootRotation() const;
+	glm::mat3 GetPreviousRootRotation() const;
+
+	/*
+	* @Descrition: Default TickComponent function - Used for Drawing Debug Trajectory
+	*/
+	virtual void TickComponent(float arg_DeltaTime, ELevelTick arg_TickType, FActorComponentTickFunction* arg_ThisTickFunction) override;
+
+	/*
+	* @Description: Logs all the important trajectory data into a single file
+	*/
+	void LogTrajectoryData(int arg_FrameCount);
+
+	/*
+	* @Description: Tick function for updating the trajectory - Called from animation node to ensure correct tick speed compared to the network
+	*/
+	void TickTrajectory();
+
+	/*
+	* @Description: Updates the past trajectory by retrieving current and updating each past node
+	*/
+	void UpdatePastTrajectory();
+
+protected:
+
+	virtual void BeginPlay() override;
+
+private:
+
+	void TickInput();
+	void CalculateTargetDirection();
+	void TickGaits();
+	void PredictFutureTrajectory();
+	void TickRotations();
+	void TickHeights();
+
+	/*
+	* @Description Returnes a liniar bled between the X and Y vector direction by using the floating point scalar
+	* @Param[in] X vector
+	* @Param[in] Y vector
+	* @Param[in] Scalar
+	* @Return The result of liniar blending X, Y and the scalar
+	*/
+	static glm::vec3 MixDirections(const glm::vec3 arg_XDirection, const glm::vec3 arg_YDirection, const float arg_Scalar);
+
+	void DrawDebugTrajectory();
+
+public:
+
 	enum { LENGTH = 120 };
 
 	//LOG THESE VARIABLES
@@ -51,7 +102,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = ExtraSmoothing)
 	float ExtraJointSmooth;
 
-
 	//Positional data
 	glm::vec3 Positions[LENGTH];
 	glm::vec3 Directions[LENGTH];
@@ -70,41 +120,6 @@ public:
 	float GaitJump[LENGTH];
 	UPROPERTY(VisibleAnywhere, Category = Gaits)
 	float GaitBump[LENGTH];
-
-	glm::vec3 GetRootPosition() const;
-	glm::vec3 GetPreviousRootPosition() const;
-	glm::mat3 GetRootRotation() const;
-	glm::mat3 GetPreviousRootRotation() const;
-
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* arg_ThisTickFunction) override;
-
-	void LogTrajectoryData(int arg_FrameCount);
-	
-	void TickTrajectory();
-
-	void TickInput();
-	void CalculateTargetDirection();
-	void UpdatePastTrajectory();
-	void TickGaits();
-	void PredictFutureTrajectory();
-	void TickRotations();
-	void TickHeights();
-
-protected:
-	virtual void BeginPlay() override;
-
-private:
-
-	/*
-	* @Description Returnes a liniar bled between the X and Y vector direction by using the floating point scalar
-	* @Param[in] X vector
-	* @Param[in] Y vector
-	* @Param[in] Scalar
-	* @Return The result of liniar blending X, Y and the scalar
-	*/
-	static glm::vec3 MixDirections(const glm::vec3 arg_XDirection, const glm::vec3 arg_YDirection, const float arg_Scalar);
-
-	void DrawDebugTrajectory();
 
 private:
 
