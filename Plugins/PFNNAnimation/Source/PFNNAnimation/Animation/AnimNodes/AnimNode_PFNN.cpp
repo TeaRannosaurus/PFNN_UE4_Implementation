@@ -172,8 +172,8 @@ void FAnimNode_PFNN::ApplyPFNN()
 		const int OVelocity = 8 + (((UTrajectoryComponent::LENGTH / 2) / 10) * 4) + JOINT_NUM * 3 * 1;
 		const int ORoation = 8 + (((UTrajectoryComponent::LENGTH / 2) / 10) * 4) + JOINT_NUM * 3 * 2;
 
-		const glm::vec3 Position = (/*RootRotation * */glm::vec3(PFNN->Yp(OPosition + i * 3 + 0), PFNN->Yp(OPosition + i * 3 + 1), PFNN->Yp(OPosition + i * 3 + 2))) + RootPosition;
-		const glm::vec3 Velocity = (/*RootRotation * */glm::vec3(PFNN->Yp(OVelocity + i * 3 + 0), PFNN->Yp(OVelocity + i * 3 + 1), PFNN->Yp(OVelocity + i * 3 + 2)));
+		const glm::vec3 Position = (RootRotation * glm::vec3(PFNN->Yp(OPosition + i * 3 + 0), PFNN->Yp(OPosition + i * 3 + 1), PFNN->Yp(OPosition + i * 3 + 2))) + RootPosition;
+		const glm::vec3 Velocity = (RootRotation * glm::vec3(PFNN->Yp(OVelocity + i * 3 + 0), PFNN->Yp(OVelocity + i * 3 + 1), PFNN->Yp(OVelocity + i * 3 + 2)));
 		const glm::vec3 Rotation = glm::vec3(PFNN->Yp(ORoation + i * 3 + 0), PFNN->Yp(ORoation + i * 3 + 1), PFNN->Yp(ORoation + i * 3 + 2));
 
 		JointPosition[i] = glm::mix(JointPosition[i] + Velocity, Position, Trajectory->ExtraJointSmooth);
@@ -359,7 +359,7 @@ void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 
 					//arg_Output.Pose[CurrentBoneIndex].SetComponents(LocalBoneTransform.GetRotation(), LocalBoneTransform.GetLocation(), LocalBoneTransform.GetScale3D());
 					arg_Output.Pose[CurrentBoneIndex].SetRotation(LocalBoneTransform.GetRotation());
-					//arg_Output.Pose[CurrentBoneIndex].SetLocation(LocalBoneTransform.GetLocation());
+					//LocalBoneTransform.SetLocation(LocalBoneTransform.GetRotation().Inverse() * LocalBoneTransform.GetLocation());
 				}
 			}
 			arg_Output.Pose.NormalizeRotations();
