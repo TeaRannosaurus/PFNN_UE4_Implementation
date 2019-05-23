@@ -158,10 +158,11 @@ void UTrajectoryComponent::PredictFutureTrajectory()
 	glm::vec3 TrajectoryPositionsBlend[LENGTH] = { glm::vec3(0.0f) };
 	TrajectoryPositionsBlend[LENGTH / 2] = Positions[LENGTH / 2];
 
+	const float BiasPosition = Responsive ? glm::mix(2.0f, 2.0f, StrafeAmount) : glm::mix(0.5f, 1.0f, StrafeAmount);
+	const float BiasDirection = Responsive ? glm::mix(5.0f, 3.0f, StrafeAmount) : glm::mix(2.0f, 0.5f, StrafeAmount);
+
 	for (int i = LENGTH / 2 + 1; i < LENGTH; i++)
 	{
-		const float BiasPosition = Responsive ? glm::mix(2.0f, 2.0f, StrafeAmount) : glm::mix(0.5f, 1.0f, StrafeAmount);
-		const float BiasDirection = Responsive ? glm::mix(5.0f, 3.0f, StrafeAmount) : glm::mix(2.0f, 0.5f, StrafeAmount);
 
 		const float ScalePosition = (1.0f - powf(1.0f - (static_cast<float>(i - LENGTH / 2) / (LENGTH / 2)), BiasPosition));
 		const float ScaleDirection = (1.0f - powf(1.0f - (static_cast<float>(i - LENGTH / 2) / (LENGTH / 2)), BiasDirection));
@@ -405,12 +406,17 @@ void UTrajectoryComponent::DrawDebugTrajectory()
 
 		for (size_t i = 0; i < LENGTH; i++)
 		{
-			FVector DebugLocation = (UPFNNHelperFunctions::XYZTranslationToXZY(Positions[i]) * 100.0f);
-			DrawDebugPoint(GetWorld(), DebugLocation, 4.0f, FColor::Red);
+			if (i % 10 == 0 || i == LENGTH-1) 
+			{
+				FVector DebugLocation = (UPFNNHelperFunctions::XYZTranslationToXZY(Positions[i]) * 100.0f);
+				DrawDebugPoint(GetWorld(), DebugLocation, 7.5f, FColor::Red);
 
-			FVector Ue4Direction = UPFNNHelperFunctions::XYZTranslationToXZY(Directions[i]) * 50.0f;
-			FVector DirectionLocation = DebugLocation + Ue4Direction;
-			DrawDebugDirectionalArrow(GetWorld(), DebugLocation, DirectionLocation, 25.0f, FColor::Black, false, -1.0f, 0, 1.0f);
+				FVector CrossProduct = FVector::CrossProduct(FVector(0.0f,0.0f,1.0f), UPFNNHelperFunctions::XYZTranslationToXZY(Directions[i])) * 50.0f;
+
+				DrawDebugPoint(GetWorld(), DebugLocation + CrossProduct, 10.0f, FColor::Black);
+				DrawDebugPoint(GetWorld(), DebugLocation - CrossProduct, 10.0f, FColor::Black);
+
+			}
 		}
 
 		FVector DebugStartingPoint = UPFNNHelperFunctions::XYZTranslationToXZY(StartingPoint);
@@ -435,9 +441,6 @@ void UTrajectoryComponent::DrawDebugTrajectory()
 		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Purple, FString::Printf(TEXT("%s Present Position"), *DebugMidPoint.ToString()));
 		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Black, FString::Printf(TEXT("%s Future Direction"), *EndDirection.ToString()));
 		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Purple, FString::Printf(TEXT("%s Future Position"), *DebugEndPoint.ToString()));
-
-
-
 
 	}
 }
