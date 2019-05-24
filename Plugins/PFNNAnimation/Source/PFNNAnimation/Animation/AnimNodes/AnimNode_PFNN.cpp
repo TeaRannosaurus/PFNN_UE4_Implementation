@@ -155,9 +155,9 @@ void FAnimNode_PFNN::ApplyPFNN()
 		FVector URightStartPoint = UPFNNHelperFunctions::XYZTranslationToXZY(RightStartPoint);
 		FVector URightEndPoint = UPFNNHelperFunctions::XYZTranslationToXZY(RightStartPoint);
 
-		ULeftStartPoint.Z	= Trajectory->GetOwner()->GetActorLocation().Z;
+		ULeftStartPoint.Z	= Trajectory->GetOwner()->GetActorLocation().Z + DistanceLenght;
 		ULeftEndPoint.Z		= Trajectory->GetOwner()->GetActorLocation().Z - DistanceLenght;
-		URightStartPoint.Z	= Trajectory->GetOwner()->GetActorLocation().Z;
+		URightStartPoint.Z	= Trajectory->GetOwner()->GetActorLocation().Z + DistanceLenght;
 		URightEndPoint.Z	= Trajectory->GetOwner()->GetActorLocation().Z - DistanceLenght;
 
 		Trajectory->GetOwner()->GetWorld()->LineTraceSingleByChannel(
@@ -177,12 +177,12 @@ void FAnimNode_PFNN::ApplyPFNN()
 		glm::vec3 LeftResultLocation = UPFNNHelperFunctions::XZYTranslationToXYZ(LeftOutResult.Location);
 		glm::vec3 RightResultLocation = UPFNNHelperFunctions::XZYTranslationToXYZ(RightOutResult.Location);
 
-		DrawDebugLine(Trajectory->GetOwner()->GetWorld(), ULeftStartPoint, ULeftEndPoint, FColor::Red, false, 0.01f, 0, 1);
-		DrawDebugLine(Trajectory->GetOwner()->GetWorld(), URightStartPoint, URightEndPoint, FColor::Red, false, 0.01f, 0, 1);
+		//DrawDebugLine(Trajectory->GetOwner()->GetWorld(), ULeftStartPoint, ULeftEndPoint, FColor::Red, false, 0.01f, 0, 1);
+		//DrawDebugLine(Trajectory->GetOwner()->GetWorld(), URightStartPoint, URightEndPoint, FColor::Red, false, 0.01f, 0, 1);
 
-		PFNN->Xp(o + (w * 0) + (i / 10)) = LeftResultLocation.y / 100;
-		PFNN->Xp(o + (w * 1) + (i / 10)) = Trajectory->Positions[i].y;
-		PFNN->Xp(o + (w * 2) + (i / 10)) = RightResultLocation.y / 100;
+		PFNN->Xp(o + (w * 0) + (i / 10)) = LeftResultLocation.y * 0.01f;
+		PFNN->Xp(o + (w * 1) + (i / 10)) = Trajectory->Positions[i].y * 0.01f;
+		PFNN->Xp(o + (w * 2) + (i / 10)) = RightResultLocation.y * 0.01f;
 	}
 
 	PFNN->Predict(Phase);

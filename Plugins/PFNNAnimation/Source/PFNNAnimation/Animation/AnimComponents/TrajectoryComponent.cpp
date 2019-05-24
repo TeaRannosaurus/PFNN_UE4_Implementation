@@ -220,21 +220,21 @@ void UTrajectoryComponent::TickHeights()
 		FVector UStartPoint = UPFNNHelperFunctions::XYZTranslationToXZY(StartPoint);
 		FVector UEndPoint = UPFNNHelperFunctions::XYZTranslationToXZY(EndPoint);
 
-		UStartPoint.Z = OwnerPawn->GetActorLocation().Z;
+		UStartPoint.Z = OwnerPawn->GetActorLocation().Z + DistanceLenght;
 		UEndPoint.Z = OwnerPawn->GetActorLocation().Z - DistanceLenght;
 
 		OwnerPawn->GetWorld()->LineTraceSingleByChannel(OutResult, UStartPoint, UEndPoint, ECollisionChannel::ECC_WorldStatic, CollisionParams);
 
 
-		Positions[i].y = OutResult.Location.Z;
+		Positions[i].y = OutResult.Location.Z * 0.01f;
 	}
 	//Convert position to world space
 
 
-	for (int i = 0; i < LENGTH; i += 10)
-	{
-		Heights[LENGTH / 2] += (Positions[i].y / ((LENGTH) / 10));
-	}
+	//for (int i = 0; i < LENGTH; i += 10)
+	//{
+	//	Heights[LENGTH / 2] += (Positions[i].y / ((LENGTH) / 10));
+	//}
 }
 
 void UTrajectoryComponent::UpdatePastTrajectory()
