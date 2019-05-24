@@ -10,12 +10,14 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
+#include "Runtime/NavigationSystem/Public/NavigationSystem.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <ThirdParty/glm/gtx/transform.hpp>
 #include <ThirdParty/glm/ext/quaternion_trigonometric.hpp>
 #include <ThirdParty/glm/ext/quaternion_common.hpp>
 #include <ThirdParty/glm/detail/type_quat.hpp>
+
 
 #include <fstream>
 
@@ -196,23 +198,32 @@ void UTrajectoryComponent::TickRotations()
 
 void UTrajectoryComponent::TickHeights()
 {
+	const float DistanceLenght = 350.f;
 	//Trajectory height
 	for (int i = LENGTH / 2; i < LENGTH; i++)
 	{
-		FCollisionQueryParams TraceParams = FCollisionQueryParams(FName(TEXT("GroundGeometryTrace")), true, GetOwner());
-		TraceParams.bTraceComplex = true;
-		TraceParams.bReturnPhysicalMaterial = false;
+		FCollisionQueryParams CollisionParams = FCollisionQueryParams(FName(TEXT("GroundGeometryTrace")), true, OwnerPawn);
+		CollisionParams.AddIgnoredActor(GetOwner());
 
-		const float DistanceLenght = 10000.0f;
-		FHitResult HitResult(ForceInit);
-		GetWorld()->LineTraceSingleByChannel(HitResult, GetOwner()->GetActorLocation(), -FVector::UpVector * DistanceLenght, ECC_Pawn, TraceParams);
+		FHitResult OutResult;
+
+		const auto StartPoint = Positions[i] * 100.f;
+		const auto EndPoint = Positions[i] * 100.f;
+
+		FVector UStartPoint = UPFNNHelperFunctions::XYZTranslationToXZY(StartPoint);
+		FVector UEndPoint = UPFNNHelperFunctions::XYZTranslationToXZY(EndPoint);
+
+		UStartPoint.Z = OwnerPawn->GetActorLocation().Z;
+		UEndPoint.Z = OwnerPawn->GetActorLocation().Z - DistanceLenght;
+
+		OwnerPawn->GetWorld()->LineTraceSingleByChannel(OutResult, UStartPoint, UEndPoint, ECollisionChannel::ECC_WorldStatic, CollisionParams);
 
 
-		Positions[i].y = HitResult.Location.Z;
-		Positions[i].y = 0; //DEBUG: removable
+		Positions[i].y = OutResult.Location.Z;
 	}
+	//Convert position to world space
 
-	Heights[LENGTH / 2] = 0.0f;
+
 	for (int i = 0; i < LENGTH; i += 10)
 	{
 		Heights[LENGTH / 2] += (Positions[i].y / ((LENGTH) / 10));

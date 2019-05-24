@@ -140,27 +140,49 @@ void FAnimNode_PFNN::ApplyPFNN()
 		const int o = (((UTrajectoryComponent::LENGTH) / 10)*10) + JOINT_NUM * 3 * 2;
 		const int w = UTrajectoryComponent::LENGTH / 10;
 
-		const glm::vec3 PositionRight	= Trajectory->Positions[i] + (Trajectory->Rotations[i] * glm::vec3(Trajectory->Width, 0, 0));
-		const glm::vec3 PositionLeft	= Trajectory->Positions[i] + (Trajectory->Rotations[i] * glm::vec3(-Trajectory->Width, 0, 0));
+		const float DistanceLenght = 350.f;
+		FCollisionQueryParams CollisionParams = FCollisionQueryParams(FName(TEXT("GroundGeometryTrace")), true, Trajectory->GetOwner());
+		CollisionParams.AddIgnoredActor(Trajectory->GetOwner());
 
-		FCollisionQueryParams TraceParams = FCollisionQueryParams(FName(TEXT("GroundGeometryTrace")), true, Trajectory->GetOwner());
-		TraceParams.bTraceComplex = true;
-		TraceParams.bReturnPhysicalMaterial = false;
+		FHitResult LeftOutResult;
+		FHitResult RightOutResult;
 
-		const float DistanceLenght = 10000;
-		FHitResult HitResultLeft(ForceInit);
-		FHitResult HitResultRight(ForceInit);
+		const auto LeftStartPoint = Trajectory->Positions[i] * 100.f + (Trajectory->Rotations[i] * glm::vec3(Trajectory->Width));
+		const auto RightStartPoint = Trajectory->Positions[i] * 100.f + (Trajectory->Rotations[i] * glm::vec3(-Trajectory->Width));
 
-		const FVector UPositionRight = UPFNNHelperFunctions::XYZTranslationToXZY(PositionRight);
-		const FVector UPositionLeft = UPFNNHelperFunctions::XYZTranslationToXZY(PositionLeft);
+		FVector ULeftStartPoint = UPFNNHelperFunctions::XYZTranslationToXZY(LeftStartPoint);
+		FVector ULeftEndPoint = UPFNNHelperFunctions::XYZTranslationToXZY(LeftStartPoint);
+		FVector URightStartPoint = UPFNNHelperFunctions::XYZTranslationToXZY(RightStartPoint);
+		FVector URightEndPoint = UPFNNHelperFunctions::XYZTranslationToXZY(RightStartPoint);
 
-		Trajectory->GetOwner()->GetWorld()->LineTraceSingleByChannel(HitResultRight, UPositionLeft, -FVector::UpVector * DistanceLenght, ECC_Pawn, TraceParams);
-		Trajectory->GetOwner()->GetWorld()->LineTraceSingleByChannel(HitResultLeft, UPositionRight, -FVector::UpVector * DistanceLenght, ECC_Pawn, TraceParams);
+		ULeftStartPoint.Z	= Trajectory->GetOwner()->GetActorLocation().Z;
+		ULeftEndPoint.Z		= Trajectory->GetOwner()->GetActorLocation().Z - DistanceLenght;
+		URightStartPoint.Z	= Trajectory->GetOwner()->GetActorLocation().Z;
+		URightEndPoint.Z	= Trajectory->GetOwner()->GetActorLocation().Z - DistanceLenght;
 
-		//TODO: Add height addition
-		PFNN->Xp(o + (w * 0) + (i / 10)) = 0 - RootPosition.y;
-		PFNN->Xp(o + (w * 1) + (i / 10)) = Trajectory->Positions[i].y - RootPosition.y;
-		PFNN->Xp(o + (w * 2) + (i / 10)) = 0 - RootPosition.y;
+		Trajectory->GetOwner()->GetWorld()->LineTraceSingleByChannel(
+			LeftOutResult, 
+			ULeftStartPoint, 
+			ULeftEndPoint, 
+			ECollisionChannel::ECC_WorldStatic, 
+			CollisionParams);
+
+		Trajectory->GetOwner()->GetWorld()->LineTraceSingleByChannel(
+			RightOutResult, 
+			URightStartPoint, 
+			URightEndPoint, 
+			ECollisionChannel::ECC_WorldStatic, 
+			CollisionParams);
+
+		glm::vec3 LeftResultLocation = UPFNNHelperFunctions::XZYTranslationToXYZ(LeftOutResult.Location);
+		glm::vec3 RightResultLocation = UPFNNHelperFunctions::XZYTranslationToXYZ(RightOutResult.Location);
+
+		DrawDebugLine(Trajectory->GetOwner()->GetWorld(), ULeftStartPoint, ULeftEndPoint, FColor::Red, false, 0.01f, 0, 1);
+		DrawDebugLine(Trajectory->GetOwner()->GetWorld(), URightStartPoint, URightEndPoint, FColor::Red, false, 0.01f, 0, 1);
+
+		PFNN->Xp(o + (w * 0) + (i / 10)) = LeftResultLocation.y / 100;
+		PFNN->Xp(o + (w * 1) + (i / 10)) = Trajectory->Positions[i].y;
+		PFNN->Xp(o + (w * 2) + (i / 10)) = RightResultLocation.y / 100;
 	}
 
 	PFNN->Predict(Phase);
