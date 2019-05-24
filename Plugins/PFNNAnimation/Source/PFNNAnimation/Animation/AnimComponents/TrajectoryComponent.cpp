@@ -13,10 +13,10 @@
 #include "Runtime/NavigationSystem/Public/NavigationSystem.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
+#include <ThirdParty/glm/gtc/matrix_transform.hpp>
+#include <ThirdParty/glm/gtc/type_ptr.hpp>
 #include <ThirdParty/glm/gtx/transform.hpp>
-#include <ThirdParty/glm/ext/quaternion_trigonometric.hpp>
-#include <ThirdParty/glm/ext/quaternion_common.hpp>
-#include <ThirdParty/glm/detail/type_quat.hpp>
+#include <ThirdParty/glm/gtx/quaternion.hpp>
 
 
 #include <fstream>
@@ -77,6 +77,12 @@ void UTrajectoryComponent::BeginPlay()
 void UTrajectoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+
+	glm::vec3 Direction1 = glm::vec3(1.0f, 0.0, 0.0);
+	glm::vec3 Direction2 = glm::vec3(0.0f, 0.0, 0.0f);
+	
+	glm::vec3 Mixed = MixDirections(Direction1, Direction2, 0.5f);
 
 #ifdef WITH_EDITOR
 	DrawDebugTrajectory();
@@ -154,21 +160,22 @@ void UTrajectoryComponent::PredictFutureTrajectory()
 	glm::vec3 TrajectoryPositionsBlend[LENGTH] = { glm::vec3(0.0f) };
 	TrajectoryPositionsBlend[LENGTH / 2] = Positions[LENGTH / 2];
 
+	const float BiasPosition = Responsive ? glm::mix(2.0f, 2.0f, StrafeAmount) : glm::mix(0.5f, 1.0f, StrafeAmount);
+	const float BiasDirection = Responsive ? glm::mix(5.0f, 3.0f, StrafeAmount) : glm::mix(2.0f, 0.5f, StrafeAmount);
+
 	for (int i = LENGTH / 2 + 1; i < LENGTH; i++)
 	{
-		const float BiasPosition = Responsive ? glm::mix(2.0f, 2.0f, StrafeAmount) : glm::mix(0.5f, 1.0f, StrafeAmount);
-		const float BiasDirection = Responsive ? glm::mix(5.0f, 3.0f, StrafeAmount) : glm::mix(2.0f, 0.5f, StrafeAmount);
 
 		const float ScalePosition = (1.0f - powf(1.0f - (static_cast<float>(i - LENGTH / 2) / (LENGTH / 2)), BiasPosition));
 		const float ScaleDirection = (1.0f - powf(1.0f - (static_cast<float>(i - LENGTH / 2) / (LENGTH / 2)), BiasDirection));
 
 		TrajectoryPositionsBlend[i] = TrajectoryPositionsBlend[i - 1] + glm::mix(Positions[i] - Positions[i], TargetVelocity, ScalePosition);
-		//TrajectoryPositionsBlend[i] = glm::mix(Positions[i] - Positions[i - 1], TargetVelocity, ScalePosition);
+		glm::vec3 DistanceFromPreviousNode = Positions[i] - Positions[i - 1];
+		//TrajectoryPositionsBlend[i] = TrajectoryPositionsBlend[i-1] + glm::mix(DistanceFromPreviousNode, TargetVelocity, ScalePosition);
 
 		//TODO: Add wall colision for future trajectory - 1519
 
-		//Directions[i] = MixDirections(Directions[i], TargetDirection, ScaleDirection);
-		Directions[i] = TargetDirection;
+		Directions[i] = MixDirections(Directions[i], TargetDirection, ScaleDirection);
 
 		Heights[i] = Heights[LENGTH / 2];
 
@@ -248,10 +255,10 @@ void UTrajectoryComponent::UpdatePastTrajectory()
 glm::vec3 UTrajectoryComponent::MixDirections(const glm::vec3 arg_XDirection, const glm::vec3 arg_YDirection,
 	const float arg_Scalar)
 {
-	const glm::quat XQuat = glm::angleAxis(atan2f(arg_XDirection.x, arg_XDirection.y), glm::vec3(0.0f, 0.0f, 1.0f));
-	const glm::quat YQuat = glm::angleAxis(atan2f(arg_YDirection.x, arg_YDirection.y), glm::vec3(0.0f, 0.0f, 1.0f));
+	const glm::quat XQuat = glm::angleAxis(atan2f(arg_XDirection.x, arg_XDirection.z), glm::vec3(0.0f, 1.0f, 0.0f));
+	const glm::quat YQuat = glm::angleAxis(atan2f(arg_YDirection.x, arg_YDirection.z), glm::vec3(0.0f, 1.0f, 0.0f));
 	const glm::quat ZQuat = glm::slerp(XQuat, YQuat, arg_Scalar);
-	return ZQuat * glm::vec3(0.0f, 1.0f, 0.0f);
+	return ZQuat * glm::vec3(0.0f, 0.0f, 1.0f);
 }
 
 
@@ -363,22 +370,40 @@ void UTrajectoryComponent::CalculateTargetDirection()
 
 	const float TargetVelocitySpeed = OwnerPawn->GetVelocity().SizeSquared() / (OwnerPawn->GetMovementComponent()->GetMaxSpeed() * OwnerPawn->GetMovementComponent()->GetMaxSpeed()) / 7.5f; //7.5 is current training walking speed
 
-	const glm::vec3 TrajectoryTargetVelocityNew = TargetVelocitySpeed * glm::vec3(CurrentFrameInput.x, 0.0f, CurrentFrameInput.y);
+	const glm::vec3 TrajectoryTargetVelocityNew = TargetVelocitySpeed * (glm::vec3(CurrentFrameInput.x, 0.0f, CurrentFrameInput.y));
 	TargetVelocity = glm::mix(TargetVelocity, TrajectoryTargetVelocityNew, ExtraVelocitySmooth);
 	StrafeAmount = glm::mix(StrafeAmount, StrafeTarget, ExtraStrafeSmooth);
 	const glm::vec3 TrajectoryTargetVelocityDirection = glm::length(TargetVelocity) < 1e-05 ? TargetDirection : glm::normalize(TargetVelocity);
-	//TrajectoryTargetDirectionNew = MixDirections(TrajectoryTargetVelocityDirection, TrajectoryTargetDirectionNew, StrafeAmount);
-	TargetDirection = TrajectoryTargetDirectionNew;//MixDirections(TargetDirection, TrajectoryTargetDirectionNew, ExtraDirectionSmooth);
+	TrajectoryTargetDirectionNew = MixDirections(TrajectoryTargetVelocityDirection, TrajectoryTargetDirectionNew, StrafeAmount);
+	TargetDirection = TrajectoryTargetDirectionNew; MixDirections(TargetDirection, TrajectoryTargetDirectionNew, ExtraDirectionSmooth);
 	
 	if (bIsTrajectoryDebuggingEnabled)
 	{
 		FVector FlippedTargetDirectionNew = UPFNNHelperFunctions::XYZTranslationToXZY(TrajectoryTargetDirectionNew);
+		FVector FlippedTargetDirection = UPFNNHelperFunctions::XYZTranslationToXZY(TargetDirection);
 		FVector FlippedCurrentFrameInput = UPFNNHelperFunctions::XYZTranslationToXZY(glm::vec3(CurrentFrameInput.x, 0.0f, CurrentFrameInput.y));
-		DrawDebugDirectionalArrow(GetWorld(), GetOwner()->GetActorLocation(), GetOwner()->GetActorLocation() + FlippedTargetDirectionNew * 100.0f, 0.0f, FColor::Blue, false, -1, 0, 2);
+		FVector FlippedTargetVelocityNew = UPFNNHelperFunctions::XYZTranslationToXZY(TrajectoryTargetVelocityNew);
+		FVector FlippedTargetVelocity = UPFNNHelperFunctions::XYZTranslationToXZY(TargetVelocity);
+
 		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::White, FString::Printf(TEXT("%s Current frame input"), *FlippedCurrentFrameInput.ToString()));
-		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Green, FString::Printf(TEXT("%s TrajectoryTargetDirectionNew"), *FlippedTargetDirectionNew.ToString()));
-		DrawDebugDirectionalArrow(GetWorld(), GetOwner()->GetActorLocation(), GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 150, 10.0f, FColor::Red, false, -1, 0, 5);
-		DrawDebugDirectionalArrow(GetWorld(), GetOwner()->GetActorLocation(), GetOwner()->GetActorLocation() + FlippedCurrentFrameInput * 100, 10.0f, FColor::White, false, -1, 0, 2);
+		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Blue, FString::Printf(TEXT("%s TrajectoryTargetDirectionNew"), *FlippedTargetDirectionNew.ToString()));
+		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Green, FString::Printf(TEXT("%s TargetDirection"), *FlippedTargetDirection.ToString()));
+		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, FString::Printf(TEXT("%s TargetVelocityNew"), *FlippedTargetVelocityNew.ToString()));
+		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Yellow, FString::Printf(TEXT("%s TargetVelocity"), *FlippedTargetVelocity.ToString()));
+		
+		FVector ActorLoc = GetOwner()->GetActorLocation();
+
+		FVector FrameInputActor = ActorLoc + FVector(0.0f, 0.0f, 200.0f);
+		FVector TargetDirectionActor = ActorLoc + FVector(0.0f, 0.0f, 250.0f);
+		FVector TargetVelocityActor = ActorLoc + FVector(0.0f, 0.0f, 225.0f);
+
+		DrawDebugDirectionalArrow(GetWorld(), FrameInputActor, FrameInputActor + FlippedCurrentFrameInput * 100, 0.0f, FColor::White, false, -1, 0, 2);
+		
+		DrawDebugDirectionalArrow(GetWorld(),TargetDirectionActor, TargetDirectionActor + FlippedTargetDirectionNew * 100.0f, 0.0f, FColor::Blue, false, -1, 0, 2);
+		DrawDebugDirectionalArrow(GetWorld(), TargetDirectionActor, TargetDirectionActor + FlippedTargetDirection * 100.0f, 0.0f, FColor::Green, false, -1, 0, 2);
+		
+		DrawDebugDirectionalArrow(GetWorld(), TargetVelocityActor, TargetVelocityActor + FlippedTargetVelocityNew * 1000.0f, 0.0f, FColor::Red, false, -1, 0, 2);
+		DrawDebugDirectionalArrow(GetWorld(), TargetVelocityActor, TargetVelocityActor + FlippedTargetVelocity * 1000.0f, 0.0f, FColor::Yellow, false, -1, 0, 2);
 	}
 }
 
@@ -386,18 +411,23 @@ void UTrajectoryComponent::DrawDebugTrajectory()
 {
 	if (bIsTrajectoryDebuggingEnabled)
 	{
-		const auto StartingPoint = Positions[0] * 100.0f;			//Get the leading point of the trajectory
-		const auto MidPoint = Positions[LENGTH / 2] * 100.0f;		//Get the mid point/player point of the trajectory
-		const auto EndingPoint = Positions[LENGTH - 1] * 100.0f;	//Get the ending point of the trajectory
+		const glm::vec3 StartingPoint = Positions[0] * 100.0f;			//Get the leading point of the trajectory
+		const glm::vec3 MidPoint = Positions[LENGTH / 2] * 100.0f;		//Get the mid point/player point of the trajectory
+		const glm::vec3 EndingPoint = Positions[LENGTH - 1] * 100.0f;	//Get the ending point of the trajectory
 
 		for (size_t i = 0; i < LENGTH; i++)
 		{
-			FVector DebugLocation = (UPFNNHelperFunctions::XYZTranslationToXZY(Positions[i]) * 100.0f);
-			DrawDebugPoint(GetWorld(), DebugLocation, 4.0f, FColor::Red);
+			if (i % 10 == 0 || i == LENGTH-1) 
+			{
+				FVector DebugLocation = (UPFNNHelperFunctions::XYZTranslationToXZY(Positions[i]) * 100.0f);
+				DrawDebugPoint(GetWorld(), DebugLocation, 7.5f, FColor::Red);
 
-			FVector Ue4Direction = UPFNNHelperFunctions::XYZTranslationToXZY(Directions[i]) * 50.0f;
-			FVector DirectionLocation = DebugLocation + Ue4Direction;
-			DrawDebugDirectionalArrow(GetWorld(), DebugLocation, DirectionLocation, 25.0f, FColor::Black, false, -1.0f, 0, 3.f);
+				FVector CrossProduct = FVector::CrossProduct(FVector(0.0f,0.0f,1.0f), UPFNNHelperFunctions::XYZTranslationToXZY(Directions[i])) * 50.0f;
+
+				DrawDebugPoint(GetWorld(), DebugLocation + CrossProduct, 10.0f, FColor::Black);
+				DrawDebugPoint(GetWorld(), DebugLocation - CrossProduct, 10.0f, FColor::Black);
+
+			}
 		}
 
 		FVector DebugStartingPoint = UPFNNHelperFunctions::XYZTranslationToXZY(StartingPoint);
@@ -411,6 +441,18 @@ void UTrajectoryComponent::DrawDebugTrajectory()
 		DrawDebugString(GetWorld(), DebugStartingPoint, TEXT("Past"), nullptr, FColor::Blue, 0.001f);
 		DrawDebugString(GetWorld(), DebugMidPoint, TEXT("Current"), nullptr, FColor::Blue, 0.001f);
 		DrawDebugString(GetWorld(), DebugEndPoint, TEXT("Future"), nullptr, FColor::Blue, 0.001f);
+		
+		const FVector StartingDirection = UPFNNHelperFunctions::XYZTranslationToXZY(Directions[0]);
+		const FVector MidDirection = UPFNNHelperFunctions::XYZTranslationToXZY(Directions[LENGTH / 2]);
+		const FVector EndDirection = UPFNNHelperFunctions::XYZTranslationToXZY(Directions[LENGTH - 1]);
+
+		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Black, FString::Printf(TEXT("%s Past Direction"), *StartingDirection.ToString()));
+		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Purple, FString::Printf(TEXT("%s Past Position"), *DebugStartingPoint.ToString()));
+		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Black, FString::Printf(TEXT("%s Present Direction"), *MidDirection.ToString()));
+		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Purple, FString::Printf(TEXT("%s Present Position"), *DebugMidPoint.ToString()));
+		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Black, FString::Printf(TEXT("%s Future Direction"), *EndDirection.ToString()));
+		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Purple, FString::Printf(TEXT("%s Future Position"), *DebugEndPoint.ToString()));
+
 	}
 }
 
