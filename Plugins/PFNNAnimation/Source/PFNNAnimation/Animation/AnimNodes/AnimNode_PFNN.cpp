@@ -364,13 +364,13 @@ void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 				if (ParentBoneIndex.GetInt() == -1)
 				{
 					//Do nothing first UE4 root bone skips
-					//arg_Output.Pose[CurrentBoneIndex].SetRotation(FQuat::MakeFromEuler(FVector::DegreesToRadians(FVector(90.0f, 0.0f, 0.0f))));
+					arg_Output.Pose[CurrentBoneIndex].SetRotation(FQuat::MakeFromEuler(FVector::DegreesToRadians(FVector(90.0f, 0.0f, 0.0f))));
 				}
 				else if(ParentBoneIndex.GetInt() == 0)
 				{
 					//Root Bone No conversion needed
 					arg_Output.Pose[CurrentBoneIndex].SetRotation(FinalBoneRotations[CurrentBoneIndex.GetInt() - 1]);
-					//arg_Output.Pose[CurrentBoneIndex].SetLocation(FinalBoneLocations[CurrentBoneIndex.GetInt() - 1]);
+					arg_Output.Pose[CurrentBoneIndex].SetLocation(FinalBoneLocations[CurrentBoneIndex.GetInt() - 1]);
 					
 				}
 				else
@@ -380,9 +380,9 @@ void FAnimNode_PFNN::Evaluate_AnyThread(FPoseContext& arg_Output)
 
 					FTransform LocalBoneTransform = CurrentBoneTransform.GetRelativeTransform(ParentBoneTransform);
 
-					//arg_Output.Pose[CurrentBoneIndex].SetComponents(LocalBoneTransform.GetRotation(), LocalBoneTransform.GetLocation(), LocalBoneTransform.GetScale3D());
-					arg_Output.Pose[CurrentBoneIndex].SetRotation(LocalBoneTransform.GetRotation());
-					//LocalBoneTransform.SetLocation(LocalBoneTransform.GetRotation().Inverse() * LocalBoneTransform.GetLocation());
+					arg_Output.Pose[CurrentBoneIndex].SetComponents(LocalBoneTransform.GetRotation(), LocalBoneTransform.GetLocation(), LocalBoneTransform.GetScale3D());
+					//arg_Output.Pose[CurrentBoneIndex].SetRotation(LocalBoneTransform.GetRotation());
+					LocalBoneTransform.SetLocation(LocalBoneTransform.GetRotation().Inverse() * LocalBoneTransform.GetLocation());
 				}
 			}
 			arg_Output.Pose.NormalizeRotations();
