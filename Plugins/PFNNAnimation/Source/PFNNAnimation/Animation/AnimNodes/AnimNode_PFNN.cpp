@@ -140,7 +140,8 @@ void FAnimNode_PFNN::ApplyPFNN()
 		const int o = (((UTrajectoryComponent::LENGTH) / 10)*10) + JOINT_NUM * 3 * 2;
 		const int w = UTrajectoryComponent::LENGTH / 10;
 
-		const float DistanceLenght = 350.f;
+		const float DistanceOffsetHeight = 100.f;
+		const float DistanceOffsetFloor = 450.f;
 		FCollisionQueryParams CollisionParams = FCollisionQueryParams(FName(TEXT("GroundGeometryTrace")), true, Trajectory->GetOwner());
 		CollisionParams.AddIgnoredActor(Trajectory->GetOwner());
 
@@ -155,10 +156,10 @@ void FAnimNode_PFNN::ApplyPFNN()
 		FVector URightStartPoint = UPFNNHelperFunctions::XYZTranslationToXZY(RightStartPoint);
 		FVector URightEndPoint = UPFNNHelperFunctions::XYZTranslationToXZY(RightStartPoint);
 
-		ULeftStartPoint.Z	= Trajectory->GetOwner()->GetActorLocation().Z + DistanceLenght;
-		ULeftEndPoint.Z		= Trajectory->GetOwner()->GetActorLocation().Z - DistanceLenght;
-		URightStartPoint.Z	= Trajectory->GetOwner()->GetActorLocation().Z + DistanceLenght;
-		URightEndPoint.Z	= Trajectory->GetOwner()->GetActorLocation().Z - DistanceLenght;
+		ULeftStartPoint.Z	= Trajectory->GetOwner()->GetActorLocation().Z + DistanceOffsetHeight;
+		ULeftEndPoint.Z		= Trajectory->GetOwner()->GetActorLocation().Z - DistanceOffsetFloor;
+		URightStartPoint.Z	= Trajectory->GetOwner()->GetActorLocation().Z + DistanceOffsetHeight;
+		URightEndPoint.Z	= Trajectory->GetOwner()->GetActorLocation().Z - DistanceOffsetFloor;
 
 		Trajectory->GetOwner()->GetWorld()->LineTraceSingleByChannel(
 			LeftOutResult, 

@@ -205,7 +205,8 @@ void UTrajectoryComponent::TickRotations()
 
 void UTrajectoryComponent::TickHeights()
 {
-	const float DistanceLenght = 350.f;
+	const float DistanceOffsetHeight = 100.f;
+	const float DistanceOffsetFloor = 450.f;
 	//Trajectory height
 	for (int i = LENGTH / 2; i < LENGTH; i++)
 	{
@@ -220,8 +221,8 @@ void UTrajectoryComponent::TickHeights()
 		FVector UStartPoint = UPFNNHelperFunctions::XYZTranslationToXZY(StartPoint);
 		FVector UEndPoint = UPFNNHelperFunctions::XYZTranslationToXZY(EndPoint);
 
-		UStartPoint.Z = OwnerPawn->GetActorLocation().Z + DistanceLenght;
-		UEndPoint.Z = OwnerPawn->GetActorLocation().Z - DistanceLenght;
+		UStartPoint.Z = OwnerPawn->GetActorLocation().Z + DistanceOffsetHeight;
+		UEndPoint.Z = OwnerPawn->GetActorLocation().Z - DistanceOffsetFloor;
 
 		OwnerPawn->GetWorld()->LineTraceSingleByChannel(OutResult, UStartPoint, UEndPoint, ECollisionChannel::ECC_WorldStatic, CollisionParams);
 
