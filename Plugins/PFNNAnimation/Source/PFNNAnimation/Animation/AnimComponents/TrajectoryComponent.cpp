@@ -121,8 +121,8 @@ void UTrajectoryComponent::TickGaits()
 	//Updating of the gaits
 	const float MovementCutOff = 0.01f;
 	const float JogCuttoff = 0.5f;
-	const int Half = 2;
 	const auto TrajectoryLength = glm::length(TargetVelocity);
+	//const auto NormalizedTrajectoryLength = glm::normalize(TrajectoryLength);
 	if (TrajectoryLength < MovementCutOff) //Standing
 	{
 		const float StandingClampMin = 0.0f;
@@ -135,7 +135,7 @@ void UTrajectoryComponent::TickGaits()
 		GaitBump[LENGTH / 2] = glm::mix(GaitBump[LENGTH / 2], 0.0f, ExtraGaitSmooth);
 
 	}
-	else if (glm::abs(CurrentFrameInput.x) > JogCuttoff || glm::abs(CurrentFrameInput.y) > JogCuttoff) //Jog
+	else if (glm::abs(TargetVelocity.x) > JogCuttoff || glm::abs(TargetVelocity.y) > JogCuttoff) //Jog
 	{
 
 		GaitStand[LENGTH / 2] = glm::mix(GaitStand[LENGTH / 2], 0.0f, ExtraGaitSmooth);
@@ -187,7 +187,7 @@ void UTrajectoryComponent::PredictFutureTrajectory()
 
 		Directions[i] = MixDirections(Directions[i], TargetDirection, ScaleDirection);
 
-		Heights[i] = Heights[LENGTH / 2];
+		/*Heights[i] = Heights[LENGTH / 2];*/
 
 		GaitStand[i]= GaitStand[LENGTH / 2];
 		GaitWalk[i] = GaitWalk[LENGTH / 2];
@@ -234,10 +234,10 @@ void UTrajectoryComponent::TickHeights()
 		UStartPoint.Z = OwnerPawn->GetActorLocation().Z + DistanceOffsetHeight;
 		UEndPoint.Z = OwnerPawn->GetActorLocation().Z - DistanceOffsetFloor;
 
-		OwnerPawn->GetWorld()->LineTraceSingleByChannel(OutResult, UStartPoint, UEndPoint, ECollisionChannel::ECC_WorldStatic, CollisionParams);
-
-
-		Positions[i].y = OutResult.Location.Z * 0.01f;
+		if(OwnerPawn->GetWorld()->LineTraceSingleByChannel(OutResult, UStartPoint, UEndPoint, ECollisionChannel::ECC_WorldStatic, CollisionParams))
+		{
+			Positions[i].y = OutResult.Location.Z * 0.01f;
+		}
 	}
 	//Convert position to world space
 
