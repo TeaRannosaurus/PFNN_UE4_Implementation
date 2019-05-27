@@ -152,6 +152,16 @@ void UTrajectoryComponent::TickGaits()
 		GaitJump[LENGTH / 2] = glm::mix(GaitJump[LENGTH / 2], 0.0f, ExtraGaitSmooth);
 		GaitBump[LENGTH / 2] = glm::mix(GaitBump[LENGTH / 2], 0.0f, ExtraGaitSmooth);
 	}
+	
+	if (bIsTrajectoryDebuggingEnabled)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Yellow, FString::Printf(TEXT("%f Gait stand "),	GaitStand[LENGTH / 2]));
+		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Yellow, FString::Printf(TEXT("%f Gait walks "),	GaitWalk[LENGTH / 2]));
+		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Yellow, FString::Printf(TEXT("%f Gait Jog "),		GaitJog[LENGTH / 2]));
+		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Yellow, FString::Printf(TEXT("%f Gait Jump "),		GaitJump[LENGTH / 2]));
+		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Yellow, FString::Printf(TEXT("%f Gait Bump "),		GaitBump[LENGTH / 2]));
+	}
+
 }
 
 void UTrajectoryComponent::PredictFutureTrajectory()
