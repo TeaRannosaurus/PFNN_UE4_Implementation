@@ -1,3 +1,5 @@
+# Project currently on hold. It might continue in the future but for now focus lies elsewhere
+
 # Phased function neural network unreal implementation
 Basic implementation of the phased function neural network in Unreal Engine 4.
 This project is intended for the 2018/2019 Year3 Survival game at Breda University of Applied Sciences.
