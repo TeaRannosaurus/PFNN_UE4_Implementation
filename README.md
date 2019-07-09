@@ -12,7 +12,6 @@ As of right now the implementation is not working as intended. Some math needs t
 * Trajectory
   * Input passed to trajectory is incorrect
   * Trajectory is not on possesed pawn location
-* Heights are being skipped for now
 * Crouching is being skipped for now
 * Jumping is being skipped for now
 
